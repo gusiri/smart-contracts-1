@@ -50,12 +50,12 @@ It could happen that there is a flaw in the token economics of ACT that we need 
 - Deploy new version of the contract
 - Pause the old contract (it's a `PausableToken`)
 - Set the `totalSupply_` of the new version to the last value of the predecessor's `totalSupply_`
-- On the new contract, `balanceOf()` needs to call its predecessor to get an accurate balance for an address
+- On the new contract, the `balanceOf()` function needs to call its predecessor to get an accurate balance for an address. Essentially, we're keeping this part of the state on the old contract because migrating it would be too painful.
 - Update `ContractRegistry` with the address of the new contract
 
 ## PoaToken Scenarios
 
-### Restrict `transfer()`s to whitelisted ETH addresses
+### Restrict `transfer()` to whitelisted ETH addresses
 
 | Probability | Severity |
 | ----------- | -------- |
@@ -76,7 +76,7 @@ There can be a case where we need to prevent a bad actor from transferring token
 
 #### Mitigation Steps
 - Call `toggleWhitelistTransfers` to turn on the `transfer()` whitelist
-- NOTE: This is currently a global flag, so this will turn on this check for everyone.
+- NOTE: This is a global flag, so this will turn on this check for *all* token holders of a given `PoaToken`.
 - Take the offending ETH address off of the whitelist
 - This effectively "freezes" the offender's assets
 - NOTE: This does not currently prevent the offender from receiving payouts
@@ -110,13 +110,19 @@ This is bound to happen sooner or later. If the custodian lost their private key
 - Migrate the state of the old contract to the new
 - Special case: If the asset should not be tokenized anymore, we'd need to re-build `PoaToken` balances by reducing all `BuyEvent`s and `TransferEvent`s in order to do a final payout
 
-#### Mitigation Steps: Mid-Long Term
-We could allow changing the custodian's address. The checks and balances would be critical here. We need to think carefully about what conditions need to be met to call this function, e.g.:
+#### Mitigation Steps: Mid Term
+We could add an admin function to change the custodian's address.
+The checks and balances would be critical here.
+We need to think carefully about what conditions need to be met to call this function, e.g.:
 
 - Custodian needs to sign a legally binding document, asking the `owner` of the contract to update their address
 - Upload this document to IPFS
 - Store the IPFS hash in the `PoaToken` contract for a public audit trail
 - Change the custodian's address in the `PoaToken` contract
+
+#### Mitigation Steps: Long Term
+Long term we probably want to switch to a smart contract representing identity. Could be [EIP725](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-725.md), [EIP735](https://github.com/ethereum/EIPs/issues/735)
+or whichever EIP is best suited to manage the custodian's identity and offers an option to recover lost keys with some strong checks and balances.
 
 ### Security vulnerability in PoaToken
 
@@ -131,7 +137,8 @@ Solidity is still a young language, and there is no guarantee that there won't b
 - Figure out what the issue is
 - Check whether we can resolve the issue by upgrading the master `PoaToken` contract via the Proxy
 - Work out which contracts are in a bad state because of an attack
-- Rebuild the state for affected contracts by reducing all `Buy` and `Transfer` events for that `PoaToken` to get a mapping of address balances:
+- If balances have been manipulated due to the vulnerability:
+  * Rebuild the state for affected contracts by reducing all `Buy` and `Transfer` events for that `PoaToken` to get a mapping of address balances:
   * Replay all correct `Buy` and `Transfer` events, skip malicious ones (e.g. hacker draining balances into one of their wallets via a vulnerability)
   * Check that the total of tokens matches the expected total
   * Check that the mapping of addresses to tokens is the same number on old and new contract (minus potential hacker addresses)
