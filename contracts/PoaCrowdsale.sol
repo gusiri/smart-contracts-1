@@ -13,7 +13,9 @@ contract PoaCrowdsale is PoaBase {
   uint256 public constant crowdsaleVersion = 1;
   // ‰ permille NOT percent: fee paid to BBK holders through ACT
   uint256 public constant feeRate = 5;
-  
+
+  // Number of digits includud during the percent calculation
+  uint256 private constant precisionOfPercentCalc = 12;
 
   //
   // start special hashed PoaCrowdsale pointers
@@ -151,6 +153,9 @@ contract PoaCrowdsale is PoaBase {
     onlyCustodian
     returns (bool)
   {
+    // Do not allow funding less then 100 cents
+    require(_amountInCents >= 100);
+
     //if the amount is bigger than funding goal, reject the transaction
     if (fundedAmountInCentsDuringFiatFunding() >= fundingGoalInCents()) {
       return false;
@@ -161,8 +166,11 @@ contract PoaCrowdsale is PoaBase {
         setFundedAmountInCentsDuringFiatFunding(
           fundedAmountInCentsDuringFiatFunding().add(_amountInCents)
         );
-        uint256 _percentOfFundingGoal = fundingGoalInCents().mul(100).div(_amountInCents);
-        uint256 _tokenAmount = totalSupply().mul(_percentOfFundingGoal).div(100);
+
+        //_percentOfFundingGoal multipled by precisionOfPercentCalc to get a more accurate result
+        uint256 _percentOfFundingGoal = percent(_amountInCents, fundingGoalInCents(), precisionOfPercentCalc);
+        uint256 _tokenAmount = totalSupply().mul(_percentOfFundingGoal).div(10 ** (precisionOfPercentCalc - 1));
+
         setFundedAmountInTokensDuringFiatFunding(
           fundedAmountInTokensDuringFiatFunding().add(_tokenAmount)
         );
@@ -358,6 +366,23 @@ contract PoaCrowdsale is PoaBase {
   //
   // start utility functions
   //
+
+  function percent(
+    uint256 numerator,
+    uint256 denominator,
+    uint256 precision
+  )
+    public
+    pure
+    returns(uint256 quotient)
+  {
+
+    // caution, check safe-to-multiply here
+    uint256 _numerator = numerator.mul(10 ** (precision+1));
+    // with rounding of last digit
+    uint256 _quotient = _numerator.div(denominator).add(5).div(10);
+    return ( _quotient);
+  }
 
   // gas saving call to get fiat rate without interface
   function getFiatRate()

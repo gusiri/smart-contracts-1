@@ -30,7 +30,8 @@ const {
   getGasUsed,
   sendTransaction,
   testWillThrow,
-  timeTravel
+  timeTravel,
+  percentBigInt
 } = require('./general')
 const { finalizedBBK } = require('./bbk')
 const { testApproveAndLockMany } = require('./act')
@@ -49,7 +50,8 @@ const custodian = accounts[2]
 const bbkBonusAddress = accounts[3]
 const bbkContributors = accounts.slice(4, 6)
 // overlap with bbkContributors... need more than 2 buyer accounts
-const whitelistedPoaBuyers = accounts.slice(4, 9)
+const whitelistedPoaBuyers = accounts.slice(4, 8)
+const fiatBuyer = accounts[9]
 const bbkTokenDistAmount = new BigNumber(1e18)
 const actRate = new BigNumber(1e3)
 const defaultName = 'TestPoa'
@@ -574,11 +576,18 @@ const testStartSale = async (poa, config) => {
 }
 
 const getExpectedTokenAmount = async (poa, amountInCents) => {
+  const precisionOfPercentCalc = 12
   const totalSupply = await poa.totalSupply()
   const fundingGoal = await poa.fundingGoalInCents()
-  const percentOfFundingGoal = fundingGoal.mul(100).div(amountInCents)
+  const percentOfFundingGoal = percentBigInt(
+    amountInCents,
+    fundingGoal,
+    precisionOfPercentCalc
+  )
 
-  return totalSupply.mul(percentOfFundingGoal).div(100)
+  return totalSupply
+    .mul(percentOfFundingGoal)
+    .div(10 ** (precisionOfPercentCalc - 1))
 }
 
 const testBuyTokensWithFiat = async (poa, buyer, amountInCents, config) => {
@@ -1360,12 +1369,18 @@ const testResetCurrencyRate = async (exr, exp, currencyType, rate) => {
 const testActiveBalances = async (poa, commitments) => {
   const totalSupply = await poa.totalSupply()
   const fundedAmountInWei = await poa.fundedAmountInWei()
+  const fundedAmountInTokensDuringFiatFunding = await poa.fundedAmountInTokensDuringFiatFunding()
+  const totalSupplyForEthInvestors = totalSupply.minus(
+    fundedAmountInTokensDuringFiatFunding
+  )
   let tokenBalanceTotal = bigZero
 
   for (const commitment of commitments) {
     const { address, amount } = commitment
     const tokenBalance = await poa.balanceOf(address)
-    const expectedBalance = amount.mul(totalSupply).div(fundedAmountInWei)
+    const expectedBalance = amount
+      .mul(totalSupplyForEthInvestors)
+      .div(fundedAmountInWei)
     tokenBalanceTotal = tokenBalanceTotal.add(tokenBalance)
 
     assert(
@@ -1375,7 +1390,11 @@ const testActiveBalances = async (poa, commitments) => {
   }
 
   assert(
-    areInRange(tokenBalanceTotal, totalSupply, commitments.length),
+    areInRange(
+      tokenBalanceTotal,
+      totalSupplyForEthInvestors,
+      commitments.length
+    ),
     'totalSupply should be within 1 wei of tokenBalanceTotal'
   )
 }
@@ -1457,6 +1476,7 @@ module.exports = {
   bbkTokenDistAmount,
   broker,
   custodian,
+  fiatBuyer,
   defaultActivationTimeout,
   defaultBuyAmount,
   defaultFiatCurrency,

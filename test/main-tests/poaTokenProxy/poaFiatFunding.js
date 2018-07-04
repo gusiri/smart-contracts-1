@@ -145,10 +145,22 @@ describe('when in FIAT Funding (stage 1)', () => {
     // start core stage functionality
 
     it('should allow FIAT buying', async () => {
-      await testBuyTokensWithFiat(poa, fiatInvestor, 100000, {
+      await testBuyTokensWithFiat(poa, fiatInvestor, 100, {
         from: custodian,
         gasPrice
       })
+    })
+
+    it('should NOT allow FIAT buying less than 100 cents', async () => {
+      await testWillThrow(testBuyTokensWithFiat, [
+        poa,
+        fiatInvestor,
+        99,
+        {
+          from: custodian,
+          gasPrice
+        }
+      ])
     })
 
     it('should increment the token amount if the same investor buys again', async () => {

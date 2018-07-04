@@ -283,6 +283,22 @@ const waitForTxToBeMined = txHash =>
     if (!done) reject(false)
   })
 
+const percentBigInt = (numerator, denominator, precision) => {
+  if (typeof numerator === 'number') {
+    numerator = new BigNumber(numerator)
+  }
+
+  // caution, check safe-to-multiply here
+  const _numerator = numerator.times(new BigNumber(10).pow(precision + 1))
+  // with rounding of last digit
+  const _quotient = _numerator
+    .div(denominator)
+    .plus(5)
+    .div(10)
+    .floor()
+  return _quotient
+}
+
 module.exports = {
   addressZero,
   areInRange,
@@ -306,5 +322,6 @@ module.exports = {
   waitForEvent,
   toBytes32,
   waitForReceiptStatusSuccessOrThrow,
-  waitForTxToBeMined
+  waitForTxToBeMined,
+  percentBigInt
 }
