@@ -1,3 +1,4 @@
+const BigNumber = require('bignumber.js')
 const {
   owner,
   custodian,
@@ -27,7 +28,8 @@ const {
 const {
   testWillThrow,
   timeTravel,
-  gasPrice
+  gasPrice,
+  percentBigInt
 } = require('../../helpers/general.js')
 
 describe('when in FIAT Funding (stage 1)', () => {
@@ -140,6 +142,30 @@ describe('when in FIAT Funding (stage 1)', () => {
           from: whitelistedPoaBuyers[1]
         }
       ])
+    })
+
+    it('should give correct percentage result', async () => {
+      const totalAmount = new BigNumber(1e21)
+      const partOfTotalAmount = new BigNumber(8e20)
+      const precisionOfPercentCalc = parseInt(
+        (await poa.precisionOfPercentCalc.call()).toString()
+      )
+      const percentage = await poa.percent.call(
+        partOfTotalAmount,
+        totalAmount,
+        precisionOfPercentCalc
+      )
+      const expectedPercentage = percentBigInt(
+        partOfTotalAmount,
+        totalAmount,
+        precisionOfPercentCalc
+      )
+
+      assert.equal(
+        percentage.toString(),
+        expectedPercentage.toString(),
+        'Percentage calculated by the contract is not the same with the expected'
+      )
     })
 
     // start core stage functionality

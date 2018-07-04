@@ -15,7 +15,7 @@ contract PoaCrowdsale is PoaBase {
   uint256 public constant feeRate = 5;
 
   // Number of digits includud during the percent calculation
-  uint256 private constant precisionOfPercentCalc = 12;
+  uint256 public constant precisionOfPercentCalc = 12;
 
   //
   // start special hashed PoaCrowdsale pointers

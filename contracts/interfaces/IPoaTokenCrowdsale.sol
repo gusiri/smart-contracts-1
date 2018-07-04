@@ -148,6 +148,10 @@ interface IPoaTokenCrowdsale {
   // start crowdsale functionality
   //
 
+  function precisionOfPercentCalc()
+    external
+    returns(uint256);
+
   function initializeCrowdsale(
     bytes32 _fiatCurrency32, // bytes32 of fiat currency string
     address _broker,
@@ -203,6 +207,13 @@ interface IPoaTokenCrowdsale {
     external
     view
     returns (uint256 _fiatRate);
+
+  function percent(
+    uint256 numerator,
+    uint256 denominator,
+    uint256 precision)
+    external
+    returns(uint256 quotient);
 
   function weiToFiatCents(uint256 _wei)
     external
