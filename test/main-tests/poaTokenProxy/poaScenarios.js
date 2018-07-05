@@ -211,7 +211,7 @@ describe('when trying various scenarios involving payout, transfer, approve, and
       await testBuyRemainingTokens(poa, {
         from:
           whitelistedPoaBuyers[
-            Math.floor(Math.random() * whitelistedPoaBuyers.length - 1)
+            Math.floor(Math.random() * whitelistedPoaBuyers.length)
           ],
         gasPrice
       })
