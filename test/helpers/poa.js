@@ -797,6 +797,7 @@ const testActivate = async (poa, fmr, ipfsHash32, config) => {
   const preBrokerPayouts = await poa.currentPayout(broker, true)
 
   await poa.activate(ipfsHash32, config)
+
   const postFeeManagerBalance = await getEtherBalance(fmr.address)
   const postStage = await poa.stage()
   const postCustody = await poa.proofOfCustody()

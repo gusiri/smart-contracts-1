@@ -355,20 +355,20 @@ contract PoaCrowdsale is PoaCommon {
   //
 
   function percent(
-    uint256 numerator,
-    uint256 denominator,
-    uint256 precision
+    uint256 _numerator,
+    uint256 _denominator,
+    uint256 _precision
   )
     public
     pure
-    returns(uint256 quotient)
+    returns(uint256)
   {
 
     // caution, check safe-to-multiply here
-    uint256 _numerator = numerator.mul(10 ** (precision+1));
+    uint256 _safeNumerator = _numerator.mul(10 ** (_precision + 1));
     // with rounding of last digit
-    uint256 _quotient = _numerator.div(denominator).add(5).div(10);
-    return ( _quotient);
+    uint256 _quotient = _safeNumerator.div(_denominator).add(5).div(10);
+    return (_quotient);
   }
 
   // gas saving call to get fiat rate without interface
