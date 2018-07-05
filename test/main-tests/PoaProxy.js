@@ -105,11 +105,11 @@ describe('when using PoaProxy contract to proxy a PoaToken', () => {
     })
 
     it('should upgrade to new master with additional functionality and storage', async () => {
-      const preTokenMaster = await pxy.proxyPoaTokenMaster()
+      const preTokenMaster = await pxy.poaTokenMaster()
 
       await pxy.proxyChangeTokenMaster(upoam.address)
 
-      const postTokenMaster = await pxy.proxyPoaTokenMaster()
+      const postTokenMaster = await pxy.poaTokenMaster()
 
       assert.equal(
         preTokenMaster,
