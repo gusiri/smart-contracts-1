@@ -5,6 +5,7 @@ import "./PoaCommon.sol";
 /* solium-disable security/no-block-members */
 /* solium-disable security/no-low-level-calls */
 
+
 /*
 This acts as a master copy for use with PoaProxy in conjunction
 with PoaToken. Storage is assumed to be set on PoaProxy through
