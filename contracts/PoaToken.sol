@@ -8,7 +8,7 @@ import "./PoaCommon.sol";
 /* solium-disable security/no-low-level-calls */
 
 
-contract PoaToken is PoaCommon, StandardToken, Ownable {
+contract PoaToken is StandardToken, Ownable, PoaCommon {
   uint256 public constant tokenVersion = 1;
 
   //
@@ -78,22 +78,6 @@ contract PoaToken is PoaCommon, StandardToken, Ownable {
     _;
   }
 
-  modifier validIpfsHash
-  (
-    bytes32[2] _ipfsHash
-  ) {
-    // check that the most common hashing algo is used sha256
-    // and that the length is correct. In theory it could be different
-    // but use of this functionality is limited to only custodian
-    // so this validation should suffice
-    bytes memory _ipfsHashBytes = bytes(to64LengthString(_ipfsHash));
-    require(_ipfsHashBytes.length == 46);
-    require(_ipfsHashBytes[0] == 0x51);
-    require(_ipfsHashBytes[1] == 0x6D);
-    require(keccak256(_ipfsHashBytes) != keccak256(bytes(proofOfCustody())));
-    _;
-  }
-
   modifier whenNotPaused() {
     require(!paused());
     _;
@@ -143,19 +127,6 @@ contract PoaToken is PoaCommon, StandardToken, Ownable {
   // start lifecycle functions
   //
 
-  // used to enter a new stage of the contract
-  function enterStage(
-    Stages _stage
-  )
-    internal
-  {
-    setStage(_stage);
-    getContractAddress("Logger").call(
-      bytes4(keccak256("logStageEvent(uint256)")),
-      _stage
-    );
-  }
-
   // function to change custodianship of poa
   function changeCustodianAddress
   (
@@ -196,52 +167,6 @@ contract PoaToken is PoaCommon, StandardToken, Ownable {
 
   //
   // end lifecycle functions
-  //
-
-  //
-  // start utility functions
-  //
-
-  // public utility function to allow checking of required fee for a given amount
-  function calculateFee
-  (
-    uint256 _value
-  )
-    public
-    pure
-    returns (uint256)
-  {
-    // divide by 1000 because feeRate permille
-    return feeRate.mul(_value).div(1000);
-  }
-
-  function isFiatInvestor(
-    address _buyer
-  )
-    internal
-    view
-    returns(bool)
-  {
-    return fiatInvestmentPerUserInTokens(_buyer) != 0;
-  }
-
-  // pay fee to FeeManager
-  function payFee
-  (
-    uint256 _value
-  )
-    internal
-    returns (bool)
-  {
-    require(
-      // solium-disable-next-line security/no-call-value
-      getContractAddress("FeeManager")
-        .call.value(_value)(bytes4(keccak256("payFee()")))
-    );
-  }
-
-  //
-  // end utility functions
   //
 
   //

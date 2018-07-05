@@ -7,9 +7,6 @@ import "./PoaProxyCommon.sol";
 
 contract PoaProxy is PoaProxyCommon {
   uint8 public constant version = 1;
-  bytes32 public constant poaTokenMasterSlot = keccak256("PoaTokenMaster");
-  bytes32 public constant poaCrowdsaleMasterSlot = keccak256("PoaCrowdsaleMaster");
-  bytes32 public constant registrySlot = keccak256("registry");
 
   event ProxyUpgradedEvent(address upgradedFrom, address upgradedTo);
 

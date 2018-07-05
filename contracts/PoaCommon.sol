@@ -1,5 +1,6 @@
 pragma solidity 0.4.23;
 
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./PoaProxyCommon.sol";
 
 /* solium-disable security/no-block-members */
@@ -7,6 +8,7 @@ import "./PoaProxyCommon.sol";
 
 
 contract PoaCommon is PoaProxyCommon {
+  using SafeMath for uint256;
 
 
   // ‰ permille NOT percent: fee paid to BBK holders through ACT
@@ -108,8 +110,58 @@ contract PoaCommon is PoaProxyCommon {
   //
 
   //
+  // start common lifecycle functinos
+  //
+
+  function enterStage(Stages _stage)
+    internal
+  {
+    setStage(_stage);
+    getContractAddress("Logger").call(
+      bytes4(keccak256("logStageEvent(uint256)")),
+      _stage
+    );
+  }
+
+  //
+  // end common lifecycle functions
+  //
+
+  //
   // start common utility functions
   //
+
+  // public utility function to allow checking of required fee for a given amount
+  function calculateFee(uint256 _value)
+    public
+    pure
+    returns (uint256)
+  {
+    // divide by 1000 because feeRate permille
+    return feeRate.mul(_value).div(1000);
+  }
+
+  // pay fee to FeeManager
+  function payFee(uint256 _value)
+    internal
+    returns (bool)
+  {
+    require(
+      // solium-disable-next-line security/no-call-value
+      getContractAddress("FeeManager")
+        .call.value(_value)(bytes4(keccak256("payFee()")))
+    );
+  }
+
+  function isFiatInvestor(
+    address _buyer
+  )
+    internal
+    view
+    returns(bool)
+  {
+    return fiatInvestmentPerUserInTokens(_buyer) != 0;
+  }
 
   // gets a given contract address by bytes32 saving gas
   function getContractAddress

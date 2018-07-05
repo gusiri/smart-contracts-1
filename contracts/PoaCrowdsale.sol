@@ -1,6 +1,5 @@
 pragma solidity 0.4.23;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./PoaCommon.sol";
 
 /* solium-disable security/no-block-members */
@@ -8,7 +7,6 @@ import "./PoaCommon.sol";
 
 
 contract PoaCrowdsale is PoaCommon {
-  using SafeMath for uint256;
 
   uint256 public constant crowdsaleVersion = 1;
   // ‰ permille NOT percent: fee paid to BBK holders through ACT
@@ -109,17 +107,6 @@ contract PoaCrowdsale is PoaCommon {
   //
   // start lifecycle functions
   //
-
-  // used to enter a new stage of the contract
-  function enterStage(Stages _stage)
-    internal
-  {
-    setStage(_stage);
-    getContractAddress("Logger").call(
-      bytes4(keccak256("logStageEvent(uint256)")),
-      _stage
-    );
-  }
 
   // used to start the FIAT preSale funding
   function startFiatPreSale()
@@ -454,38 +441,6 @@ contract PoaCrowdsale is PoaCommon {
     returns (uint256)
   {
     return fiatCentsToWei(fundingGoalInCents());
-  }
-
-  // pay fee to FeeManager
-  function payFee(uint256 _value)
-    internal
-    returns (bool)
-  {
-    require(
-      // solium-disable-next-line security/no-call-value
-      getContractAddress("FeeManager")
-        .call.value(_value)(bytes4(keccak256("payFee()")))
-    );
-  }
-
-  // public utility function to allow checking of required fee for a given amount
-  function calculateFee(uint256 _value)
-    public
-    pure
-    returns (uint256)
-  {
-    // divide by 1000 because feeRate permille
-    return feeRate.mul(_value).div(1000);
-  }
-
-  function isFiatInvestor(
-    address _buyer
-  )
-    internal
-    view
-    returns(bool)
-  {
-    return fiatInvestmentPerUserInTokens(_buyer) != 0;
   }
 
   //
