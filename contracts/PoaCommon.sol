@@ -7,7 +7,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 /* solium-disable security/no-low-level-calls */
 
 
-contract PoaBase {
+contract PoaCommon {
 
 
   // ‰ permille NOT percent: fee paid to BBK holders through ACT

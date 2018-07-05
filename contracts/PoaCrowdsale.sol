@@ -1,13 +1,13 @@
 pragma solidity 0.4.23;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./PoaBase.sol";
+import "./PoaCommon.sol";
 
 /* solium-disable security/no-block-members */
 /* solium-disable security/no-low-level-calls */
 
 
-contract PoaCrowdsale is PoaBase {
+contract PoaCrowdsale is PoaCommon {
   using SafeMath for uint256;
 
   uint256 public constant crowdsaleVersion = 1;

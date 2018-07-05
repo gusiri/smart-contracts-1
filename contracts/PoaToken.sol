@@ -2,13 +2,13 @@ pragma solidity 0.4.23;
 
 import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./PoaBase.sol";
+import "./PoaCommon.sol";
 
 /* solium-disable security/no-block-members */
 /* solium-disable security/no-low-level-calls */
 
 
-contract PoaToken is PoaBase, StandardToken, Ownable {
+contract PoaToken is PoaCommon, StandardToken, Ownable {
   uint256 public constant tokenVersion = 1;
 
   //
