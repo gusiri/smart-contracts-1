@@ -1,4 +1,3 @@
-const BigNumber = require('bignumber.js')
 const {
   owner,
   custodian,
@@ -10,8 +9,8 @@ const {
   testStartPreSale,
   testBuyTokens,
   testBuyTokensWithFiat,
+  testIncrementOfBalanceWhenBuyTokensWithFiat,
   determineNeededTimeTravel,
-  getExpectedTokenAmount,
   testActivate,
   testPayout,
   testClaim,
@@ -23,13 +22,13 @@ const {
   testTransfer,
   testApprove,
   testTransferFrom,
-  testTerminate
+  testTerminate,
+  testPercent
 } = require('../../helpers/poa')
 const {
   testWillThrow,
   timeTravel,
-  gasPrice,
-  percentBigInt
+  gasPrice
 } = require('../../helpers/general.js')
 
 describe('when in FIAT Funding (stage 1)', () => {
@@ -145,27 +144,7 @@ describe('when in FIAT Funding (stage 1)', () => {
     })
 
     it('should give correct percentage result', async () => {
-      const totalAmount = new BigNumber(1e21)
-      const partOfTotalAmount = new BigNumber(8e20)
-      const precisionOfPercentCalc = parseInt(
-        (await poa.precisionOfPercentCalc.call()).toString()
-      )
-      const percentage = await poa.percent.call(
-        partOfTotalAmount,
-        totalAmount,
-        precisionOfPercentCalc
-      )
-      const expectedPercentage = percentBigInt(
-        partOfTotalAmount,
-        totalAmount,
-        precisionOfPercentCalc
-      )
-
-      assert.equal(
-        percentage.toString(),
-        expectedPercentage.toString(),
-        'Percentage calculated by the contract is not the same with the expected'
-      )
+      await testPercent({ poa })
     })
 
     // start core stage functionality
@@ -190,28 +169,18 @@ describe('when in FIAT Funding (stage 1)', () => {
     })
 
     it('should increment the token amount if the same investor buys again', async () => {
-      const invesmentAmountInCents = 100000
+      const fundingGoalInCents = await poa.fundingGoalInCents()
+      const fundedAmount = await poa.fundedAmountInCentsDuringFiatFunding()
+      const remainingAmount = fundingGoalInCents.sub(fundedAmount)
+      const invesmentAmountInCents = remainingAmount
+        .div(2)
+        .floor()
+        .toNumber()
 
-      const preInvestedTokenAmountPerUser = await poa.fiatInvestmentPerUserInTokens(
-        fiatInvestor
-      )
-      const expectedTokenAmount = await getExpectedTokenAmount(
+      testIncrementOfBalanceWhenBuyTokensWithFiat(
         poa,
+        fiatInvestor,
         invesmentAmountInCents
-      )
-
-      await testBuyTokensWithFiat(poa, fiatInvestor, invesmentAmountInCents, {
-        from: custodian,
-        gasPrice
-      })
-
-      const postInvestedTokenAmountPerUser = await poa.fiatInvestmentPerUserInTokens(
-        fiatInvestor
-      )
-
-      assert.equal(
-        preInvestedTokenAmountPerUser.add(expectedTokenAmount).toString(),
-        postInvestedTokenAmountPerUser.toString()
       )
     })
 
@@ -231,11 +200,6 @@ describe('when in FIAT Funding (stage 1)', () => {
     })
 
     it('should NOT allow FIAT investors to buy tokens during the ETH sale with the same address they used during the FIAT sale', async () => {
-      await testBuyTokensWithFiat(poa, fiatInvestor, 100000, {
-        from: custodian,
-        gasPrice
-      })
-
       await testWillThrow(testBuyTokens, [
         poa,
         {

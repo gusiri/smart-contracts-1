@@ -633,6 +633,32 @@ const testBuyTokensWithFiat = async (poa, buyer, amountInCents, config) => {
   )
 }
 
+const testIncrementOfBalanceWhenBuyTokensWithFiat = async (
+  poa,
+  buyer,
+  amountInCents
+) => {
+  const preInvestedTokenAmountPerUser = await poa.fiatInvestmentPerUserInTokens(
+    buyer
+  )
+  const expectedTokenAmount = await getExpectedTokenAmount(poa, amountInCents)
+
+  await testBuyTokensWithFiat(poa, buyer, amountInCents, {
+    from: custodian,
+    gasPrice
+  })
+
+  const postInvestedTokenAmountPerUser = await poa.fiatInvestmentPerUserInTokens(
+    buyer
+  )
+
+  assert.equal(
+    preInvestedTokenAmountPerUser.add(expectedTokenAmount).toString(),
+    postInvestedTokenAmountPerUser.toString(),
+    'Total invested token amount does not match with the expected.'
+  )
+}
+
 const testBuyTokens = async (poa, config) => {
   assert(!!config.gasPrice, 'gasPrice must be given')
   assert(!!config.value, 'value must be given')
@@ -1467,6 +1493,32 @@ const testProxyUnchanged = async (poa, first, state) => {
   }
 }
 
+const testPercent = async ({
+  poa,
+  totalAmount = new BigNumber(1e21),
+  partOfTotalAmount = new BigNumber(8e20)
+} = {}) => {
+  const precisionOfPercentCalc = parseInt(
+    (await poa.precisionOfPercentCalc.call()).toString()
+  )
+  const percentage = await poa.percent.call(
+    partOfTotalAmount,
+    totalAmount,
+    precisionOfPercentCalc
+  )
+  const expectedPercentage = percentBigInt(
+    partOfTotalAmount,
+    totalAmount,
+    precisionOfPercentCalc
+  )
+
+  assert.equal(
+    percentage.toString(),
+    expectedPercentage.toString(),
+    'Percentage calculated by the contract is not the same with the expected'
+  )
+}
+
 module.exports = {
   accounts,
   activationTimeoutContract,
@@ -1508,6 +1560,7 @@ module.exports = {
   testBuyTokens,
   testBuyTokensMulti,
   testBuyTokensWithFiat,
+  testIncrementOfBalanceWhenBuyTokensWithFiat,
   testCalculateFee,
   testChangeCustodianAddress,
   testClaim,
@@ -1541,5 +1594,6 @@ module.exports = {
   whitelistedPoaBuyers,
   emptyBytes32,
   stages,
-  getExpectedTokenAmount
+  getExpectedTokenAmount,
+  testPercent
 }
