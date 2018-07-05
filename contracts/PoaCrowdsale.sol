@@ -13,7 +13,7 @@ contract PoaCrowdsale is PoaCommon {
   uint256 public constant feeRate = 5;
 
   // Number of digits includud during the percent calculation
-  uint256 public constant precisionOfPercentCalc = 12;
+  uint256 public constant precisionOfPercentCalc = 18;
 
   //
   // start special hashed PoaCrowdsale pointers
@@ -143,35 +143,35 @@ contract PoaCrowdsale is PoaCommon {
     // Do not allow funding less then 100 cents
     require(_amountInCents >= 100);
 
-    //if the amount is bigger than funding goal, reject the transaction
-    if (fundedAmountInCentsDuringFiatFunding() >= fundingGoalInCents()) {
-      return false;
+    uint256 _newFundedAmount = fundedAmountInCentsDuringFiatFunding().add(_amountInCents);
+
+    // if the amount is smaller than remaining amount, continue the transaction
+
+    if (fundingGoalInCents().sub(_newFundedAmount) >= 0) {
+      setFundedAmountInCentsDuringFiatFunding(
+        fundedAmountInCentsDuringFiatFunding().add(_amountInCents)
+      );
+
+      //_percentOfFundingGoal multipled by precisionOfPercentCalc to get a more accurate result
+      uint256 _percentOfFundingGoal = percent(_amountInCents, fundingGoalInCents(), precisionOfPercentCalc);
+      uint256 _tokenAmount = totalSupply().mul(_percentOfFundingGoal).div(10 ** precisionOfPercentCalc);
+
+      setFundedAmountInTokensDuringFiatFunding(
+        fundedAmountInTokensDuringFiatFunding().add(_tokenAmount)
+      );
+      setFiatInvestmentPerUserInTokens(
+        _contributor, 
+        fiatInvestmentPerUserInTokens(_contributor).add(_tokenAmount)
+      );
+
+      if (fundedAmountInCentsDuringFiatFunding() >= fundingGoalInCents()) {
+        enterStage(Stages.Pending);
+      }
+
+      return true;    
     } else {
-      uint256 _newFundedAmount = fundedAmountInCentsDuringFiatFunding().add(_amountInCents);
-
-      if (fundingGoalInCents().sub(_newFundedAmount) > 0) {
-        setFundedAmountInCentsDuringFiatFunding(
-          fundedAmountInCentsDuringFiatFunding().add(_amountInCents)
-        );
-
-        //_percentOfFundingGoal multipled by precisionOfPercentCalc to get a more accurate result
-        uint256 _percentOfFundingGoal = percent(_amountInCents, fundingGoalInCents(), precisionOfPercentCalc);
-        uint256 _tokenAmount = totalSupply().mul(_percentOfFundingGoal).div(10 ** (precisionOfPercentCalc - 1));
-
-        setFundedAmountInTokensDuringFiatFunding(
-          fundedAmountInTokensDuringFiatFunding().add(_tokenAmount)
-        );
-        setFiatInvestmentPerUserInTokens(
-          _contributor, 
-          fiatInvestmentPerUserInTokens(_contributor).add(_tokenAmount)
-        );
-
-        return true;
-      } else {
-        return false;
-      } 
-
-    }
+      return false;
+    } 
   }
 
   // buy tokens

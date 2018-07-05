@@ -289,13 +289,9 @@ const percentBigInt = (numerator, denominator, precision) => {
   }
 
   // caution, check safe-to-multiply here
-  const _numerator = numerator.times(new BigNumber(10).pow(precision + 1))
+  const _numerator = numerator.times(new BigNumber(10).pow(precision))
   // with rounding of last digit
-  const _quotient = _numerator
-    .div(denominator)
-    .plus(5)
-    .div(10)
-    .floor()
+  const _quotient = _numerator.div(denominator).floor()
   return _quotient
 }
 

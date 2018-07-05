@@ -576,7 +576,7 @@ const testStartSale = async (poa, config) => {
 }
 
 const getExpectedTokenAmount = async (poa, amountInCents) => {
-  const precisionOfPercentCalc = 12
+  const precisionOfPercentCalc = await poa.precisionOfPercentCalc.call()
   const totalSupply = await poa.totalSupply()
   const fundingGoal = await poa.fundingGoalInCents()
   const percentOfFundingGoal = percentBigInt(
@@ -587,7 +587,7 @@ const getExpectedTokenAmount = async (poa, amountInCents) => {
 
   return totalSupply
     .mul(percentOfFundingGoal)
-    .div(10 ** (precisionOfPercentCalc - 1))
+    .div(new BigNumber(10).pow(precisionOfPercentCalc))
 }
 
 const testBuyTokensWithFiat = async (poa, buyer, amountInCents, config) => {
@@ -604,6 +604,7 @@ const testBuyTokensWithFiat = async (poa, buyer, amountInCents, config) => {
   const postInvestedTokenAmountPerUser = await poa.fiatInvestmentPerUserInTokens(
     buyer
   )
+
   const expectedFundedAmountInCents = preFundedAmountInCents.add(amountInCents)
   const postFundedAmountInTokens = await poa.fundedAmountInTokensDuringFiatFunding()
   const postFundedAmountInCents = await poa.fundedAmountInCentsDuringFiatFunding()
@@ -1520,6 +1521,14 @@ const testPercent = async ({
   )
 }
 
+const getRemainingAmountInCents = async poa => {
+  const fundingGoalInCents = await poa.fundingGoalInCents()
+  const fundedAmount = await poa.fundedAmountInCentsDuringFiatFunding()
+  const remainingAmount = fundingGoalInCents.sub(fundedAmount)
+
+  return remainingAmount
+}
+
 module.exports = {
   accounts,
   activationTimeoutContract,
@@ -1596,5 +1605,6 @@ module.exports = {
   emptyBytes32,
   stages,
   getExpectedTokenAmount,
-  testPercent
+  testPercent,
+  getRemainingAmountInCents
 }
