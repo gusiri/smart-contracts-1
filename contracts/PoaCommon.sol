@@ -1,13 +1,12 @@
 pragma solidity 0.4.23;
 
-import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./PoaProxyCommon.sol";
 
 /* solium-disable security/no-block-members */
 /* solium-disable security/no-low-level-calls */
 
 
-contract PoaCommon {
+contract PoaCommon is PoaProxyCommon {
 
 
   // ‰ permille NOT percent: fee paid to BBK holders through ACT
@@ -25,7 +24,7 @@ contract PoaCommon {
   }
 
   //
-  // start special hashed common storage pointers
+  // start common non-sequential storage pointers
   //
 
   // represents slot for: Stage
@@ -47,15 +46,17 @@ contract PoaCommon {
   // represents slot for: mapping(address => uint256)
   bytes32 internal constant investmentAmountPerUserInWeiSlot = 
   keccak256("investmentAmountPerUserInWei");
-  // represents slot for: address
-  bytes32 internal constant registrySlot = keccak256("registry");
   // represents slot for: mapping(address => uint256)
   bytes32 internal constant unclaimedPayoutTotalsSlot = keccak256("unclaimedPayoutTotals");
   bytes32 internal constant pausedSlot = keccak256("paused");
   bytes32 internal constant tokenInitializedSlot = keccak256("tokenInitialized");
 
   //
-  // start modifiers
+  // end common non-sequential storage pointers
+  //
+
+  //
+  // start common modifiers
   //
 
   modifier onlyCustodian() {
@@ -87,56 +88,8 @@ contract PoaCommon {
   }
 
   //
-  // start hashed pointer getters
+  // end common modifiers
   //
-
-  function stage()
-    public
-    view
-    returns (Stages _stage)
-  {
-    bytes32 _stageSlot = stageSlot;
-    assembly {
-      _stage := sload(_stageSlot)
-    }
-  }
-
-  function custodian()
-    public
-    view
-    returns (address _custodian)
-  {
-    bytes32 _custodianSlot = custodianSlot;
-    assembly {
-      _custodian := sload(_custodianSlot)
-    }
-  }
-
-  function proofOfCustody32()
-    public
-    view
-    returns (bytes32[2] _proofOfCustody32)
-  {
-    bytes32 _proofOfCustody32Slot = proofOfCustody32Slot;
-
-    assembly {
-      mstore(_proofOfCustody32, sload(_proofOfCustody32Slot))
-      mstore(add(_proofOfCustody32, 0x20), sload(add(_proofOfCustody32Slot, 0x01)))
-    }
-  }
-
-  function fundedAmountInTokensDuringFiatFunding()
-    public
-    view
-    returns (uint256 _fundedAmountInTokensDuringFiatFunding)
-  {
-    bytes32 _fundedAmountInTokensDuringFiatFundingSlot = fundedAmountInTokensDuringFiatFundingSlot;
-    assembly {
-      _fundedAmountInTokensDuringFiatFunding := sload(
-        _fundedAmountInTokensDuringFiatFundingSlot
-      )
-    }
-  }
 
   //
   // start regular getters
@@ -154,135 +107,8 @@ contract PoaCommon {
   // end regular getters
   //
 
-  // mimics mapping storage method of storing/getting entries
-  function fiatInvestmentPerUserInTokens(
-    address _address
-  )
-    public
-    view
-    returns (uint256 _fiatInvested)
-  {
-    bytes32 _fiatInvestmentPerUserInTokensSlot = fiatInvestmentPerUserInTokensSlot;
-    bytes32 _entrySlot = keccak256(
-      abi.encodePacked(_address, _fiatInvestmentPerUserInTokensSlot)
-    );
-    assembly {
-      _fiatInvested := sload(_entrySlot)
-    }
-  }
-
-  function fundedAmountInWei()
-    public
-    view
-    returns (uint256 _fundedAmountInWei)
-  {
-    bytes32 _fundedAmountInWeiSlot = fundedAmountInWeiSlot;
-    assembly {
-      _fundedAmountInWei := sload(_fundedAmountInWeiSlot)
-    }
-  }
-
-  function investmentAmountPerUserInWei(
-    address _address
-  )
-    public
-    view
-    returns (uint256 _investmentAmountPerUserInWei)
-  {
-    bytes32 _entrySlot = keccak256(
-      abi.encodePacked(_address, investmentAmountPerUserInWeiSlot)
-    );
-    assembly {
-      _investmentAmountPerUserInWei := sload(_entrySlot)
-    }
-  }
-
-  function registry()
-    public
-    view
-    returns (address _registry)
-  {
-    bytes32 _registrySlot = registrySlot;
-    assembly {
-      _registry := sload(_registrySlot)
-    }
-  }
-
-  function tokenInitialized()
-    public
-    view
-    returns (bool _tokenInitialized)
-  {
-    bytes32 _tokenInitializedSlot = tokenInitializedSlot;
-    assembly {
-      _tokenInitialized := sload(_tokenInitializedSlot)
-    }
-  }
-
   //
-  // start hashed pointer setters
-  //
-
-  function setStage(Stages _stage)
-    internal
-  {
-    bytes32 _stageSlot = stageSlot;
-    assembly {
-      sstore(_stageSlot, _stage)
-    }
-  }
-
-  function setProofOfCustody32(
-    bytes32[2] _proofOfCustody32
-  )
-    internal
-  {
-    bytes32 _proofOfCustody32Slot = proofOfCustody32Slot;
-    assembly {
-      // store first slot from memory
-      sstore(
-        _proofOfCustody32Slot, 
-        mload(_proofOfCustody32)
-      )
-      // store second slot from memory
-      sstore(
-        add(_proofOfCustody32Slot, 0x01), 
-        mload(
-          add(_proofOfCustody32, 0x20)
-        )
-      )
-    }
-  }
-
-  function setTotalSupply(uint256 _totalSupply)
-    internal
-  {
-    bytes32 _totalSupplySlot = totalSupplySlot;
-    assembly {
-      sstore(_totalSupplySlot, _totalSupply)
-    }
-  }
-
-  function setUnclaimedPayoutTotals(
-    address _address,
-    uint256 _amount
-  )
-    internal
-  {
-    bytes32 _entrySlot = keccak256(
-      abi.encodePacked(_address, unclaimedPayoutTotalsSlot)
-    );
-    assembly {
-      sstore(_entrySlot, _amount)
-    }
-  }
-
-  //
-  // end hashed pointer setters
-  //
-
-  //
-  // start utility functions
+  // start common utility functions
   //
 
   // gets a given contract address by bytes32 saving gas
@@ -458,4 +284,293 @@ contract PoaCommon {
     // return trimmed bytes array converted to string
     return string(_bytesStringTrimmed);
   }
+
+  //
+  // end common utility functions
+  //
+
+  
+  //
+  // start common non-sequential storage getters/setters
+  //
+
+  function stage()
+    public
+    view
+    returns (Stages _stage)
+  {
+    bytes32 _stageSlot = stageSlot;
+    assembly {
+      _stage := sload(_stageSlot)
+    }
+  }
+
+  function setStage(Stages _stage)
+    internal
+  {
+    bytes32 _stageSlot = stageSlot;
+    assembly {
+      sstore(_stageSlot, _stage)
+    }
+  }
+
+  function custodian()
+    public
+    view
+    returns (address _custodian)
+  {
+    bytes32 _custodianSlot = custodianSlot;
+    assembly {
+      _custodian := sload(_custodianSlot)
+    }
+  }
+
+  function setCustodian(address _custodian)
+    internal
+  {
+    bytes32 _custodianSlot = custodianSlot;
+    assembly {
+      sstore(_custodianSlot, _custodian)
+    }
+  }
+
+  function proofOfCustody32()
+    public
+    view
+    returns (bytes32[2] _proofOfCustody32)
+  {
+    bytes32 _proofOfCustody32Slot = proofOfCustody32Slot;
+
+    assembly {
+      mstore(_proofOfCustody32, sload(_proofOfCustody32Slot))
+      mstore(add(_proofOfCustody32, 0x20), sload(add(_proofOfCustody32Slot, 0x01)))
+    }
+  }
+
+  function setProofOfCustody32(
+    bytes32[2] _proofOfCustody32
+  )
+    internal
+  {
+    bytes32 _proofOfCustody32Slot = proofOfCustody32Slot;
+    assembly {
+      // store first slot from memory
+      sstore(
+        _proofOfCustody32Slot, 
+        mload(_proofOfCustody32)
+      )
+      // store second slot from memory
+      sstore(
+        add(_proofOfCustody32Slot, 0x01), 
+        mload(
+          add(_proofOfCustody32, 0x20)
+        )
+      )
+    }
+  }
+
+  function totalSupply()
+    public
+    view
+    returns (uint256 _totalSupply)
+  {
+    bytes32 _totalSupplySlot = totalSupplySlot;
+    assembly {
+      _totalSupply := sload(_totalSupplySlot)
+    }
+  }
+
+  function setTotalSupply(uint256 _totalSupply)
+    internal
+  {
+    bytes32 _totalSupplySlot = totalSupplySlot;
+    assembly {
+      sstore(_totalSupplySlot, _totalSupply)
+    }
+  }
+
+  function fundedAmountInTokensDuringFiatFunding()
+    public
+    view
+    returns (uint256 _fundedAmountInTokensDuringFiatFunding)
+  {
+    bytes32 _fundedAmountInTokensDuringFiatFundingSlot = fundedAmountInTokensDuringFiatFundingSlot;
+    assembly {
+      _fundedAmountInTokensDuringFiatFunding := sload(
+        _fundedAmountInTokensDuringFiatFundingSlot
+      )
+    }
+  }
+
+  function setFundedAmountInTokensDuringFiatFunding(
+    uint256 _amount
+  )
+    internal
+  {
+    bytes32 _fundedAmountInTokensDuringFiatFundingSlot = fundedAmountInTokensDuringFiatFundingSlot;
+    assembly {
+      sstore(
+        _fundedAmountInTokensDuringFiatFundingSlot,
+        _amount
+      )
+    }
+  }
+
+  function fiatInvestmentPerUserInTokens(
+    address _address
+  )
+    public
+    view
+    returns (uint256 _fiatInvested)
+  {
+    bytes32 _fiatInvestmentPerUserInTokensSlot = fiatInvestmentPerUserInTokensSlot;
+    bytes32 _entrySlot = keccak256(
+      abi.encodePacked(_address, _fiatInvestmentPerUserInTokensSlot)
+    );
+    assembly {
+      _fiatInvested := sload(_entrySlot)
+    }
+  }
+
+  function setFiatInvestmentPerUserInTokens(
+    address _address, 
+    uint256 _fiatInvestment
+  )
+    internal
+  {
+    bytes32 _entrySlot = keccak256(
+      abi.encodePacked(_address, fiatInvestmentPerUserInTokensSlot)
+    );
+    assembly {
+      sstore(_entrySlot, _fiatInvestment)
+    }
+  }
+
+  function fundedAmountInWei()
+    public
+    view
+    returns (uint256 _fundedAmountInWei)
+  {
+    bytes32 _fundedAmountInWeiSlot = fundedAmountInWeiSlot;
+    assembly {
+      _fundedAmountInWei := sload(_fundedAmountInWeiSlot)
+    }
+  }
+
+  function setFundedAmountInWei(
+    uint256 _fundedAmountInWei
+  )
+    internal
+  {
+    bytes32 _fundedAmountInWeiSlot = fundedAmountInWeiSlot;
+    assembly {
+      sstore(_fundedAmountInWeiSlot, _fundedAmountInWei)
+    }
+  }
+
+  function investmentAmountPerUserInWei(
+    address _address
+  )
+    public
+    view
+    returns (uint256 _investmentAmountPerUserInWei)
+  {
+    bytes32 _entrySlot = keccak256(
+      abi.encodePacked(_address, investmentAmountPerUserInWeiSlot)
+    );
+    assembly {
+      _investmentAmountPerUserInWei := sload(_entrySlot)
+    }
+  }
+
+  function setInvestmentAmountPerUserInWei(
+    address _address,
+    uint256 _amount
+  )
+    internal
+  {
+    bytes32 _entrySlot = keccak256(
+      abi.encodePacked(_address, investmentAmountPerUserInWeiSlot)
+    );
+    assembly {
+      sstore(_entrySlot, _amount)
+    }
+  }
+
+  function unclaimedPayoutTotals(
+    address _address
+  )
+    public
+    view
+    returns (uint256 _unclaimedPayoutTotals)
+  {
+    bytes32 _entrySlot = keccak256(
+      abi.encodePacked(_address, unclaimedPayoutTotalsSlot)
+    );
+    assembly {
+      _unclaimedPayoutTotals := sload(_entrySlot)
+    }
+  }
+
+  function setUnclaimedPayoutTotals(
+    address _address,
+    uint256 _amount
+  )
+    internal
+  {
+    bytes32 _entrySlot = keccak256(
+      abi.encodePacked(_address, unclaimedPayoutTotalsSlot)
+    );
+    assembly {
+      sstore(_entrySlot, _amount)
+    }
+  }
+
+  function paused()
+    public
+    view
+    returns (bool _paused)
+  {
+    bytes32 _pausedSlot = pausedSlot;
+    assembly {
+      _paused := sload(_pausedSlot)
+    }
+  }
+
+  function setPaused(
+    bool _paused
+  )
+    internal
+  {
+    bytes32 _pausedSlot = pausedSlot;
+    assembly {
+      sstore(_pausedSlot, _paused)
+    }
+  }
+
+  function tokenInitialized()
+    public
+    view
+    returns (bool _tokenInitialized)
+  {
+    bytes32 _tokenInitializedSlot = tokenInitializedSlot;
+    assembly {
+      _tokenInitialized := sload(_tokenInitializedSlot)
+    }
+  }
+
+  function setTokenInitialized(
+    bool _tokenInitialized
+  )
+    internal
+  {
+    bytes32 _tokenInitializedSlot = tokenInitializedSlot;
+    assembly {
+      sstore(_tokenInitializedSlot, _tokenInitialized)
+    }
+  }
+
+  //
+  // end common non-sequential storage getters/setters
+  //
 }

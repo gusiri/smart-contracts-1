@@ -41,16 +41,6 @@ contract PoaToken is PoaCommon, StandardToken, Ownable {
   // end poaToken specific storage variables
   //
 
-  //
-  // start special hashed common storage pointers
-  //
-
-  bytes32 private constant poaCrowdsaleMasterSlot = keccak256("PoaCrowdsaleMaster");
-
-  //
-  // end special hashed common storage pointers
-  //
-
   /*
     TODO: perhaps move these to Logger contract since Pausable is 
     no longer inherited from openzeppelin
@@ -609,113 +599,6 @@ contract PoaToken is PoaCommon, StandardToken, Ownable {
 
   //
   // end ERC20 overrides
-  //
-
-  //
-  // start hashed pointer getters
-  //
-
-  function totalSupply()
-    public
-    view
-    returns (uint256 _totalSupply)
-  {
-    bytes32 _totalSupplySlot = totalSupplySlot;
-    assembly {
-      _totalSupply := sload(_totalSupplySlot)
-    }
-  }
-
-  function paused()
-    public
-    view
-    returns (bool _paused)
-  {
-    bytes32 _pausedSlot = pausedSlot;
-    assembly {
-      _paused := sload(_pausedSlot)
-    }
-  }
-
-  function unclaimedPayoutTotals(
-    address _address
-  )
-    public
-    view
-    returns (uint256 _unclaimedPayoutTotals)
-  {
-    bytes32 _entrySlot = keccak256(
-      abi.encodePacked(_address, unclaimedPayoutTotalsSlot)
-    );
-    assembly {
-      _unclaimedPayoutTotals := sload(_entrySlot)
-    }
-  }
-
-  function poaCrowdsaleMaster()
-    public
-    view
-    returns (address _poaCrowdsaleMaster)
-  {
-    bytes32 _poaCrowdsaleMasterSlot = poaCrowdsaleMasterSlot;
-    assembly {
-      _poaCrowdsaleMaster := sload(_poaCrowdsaleMasterSlot)
-    }
-  }
-
-  //
-  // end hashed pointer getters
-  //
-
-  //
-  // start hashed pointer setters
-  //
-
-  function setCustodian(address _custodian)
-    internal
-  {
-    bytes32 _custodianSlot = custodianSlot;
-    assembly {
-      sstore(_custodianSlot, _custodian)
-    }
-  }
-
-  // needed for setupContract
-  function setRegistry(
-    address _address
-  )
-    internal
-  {
-    bytes32 _registrySlot = registrySlot;
-    assembly {
-      sstore(_registrySlot, _address)
-    }
-  }
-
-  function setPaused(
-    bool _paused
-  )
-    internal
-  {
-    bytes32 _pausedSlot = pausedSlot;
-    assembly {
-      sstore(_pausedSlot, _paused)
-    }
-  }
-
-  function setTokenInitialized(
-    bool _tokenInitialized
-  )
-    internal
-  {
-    bytes32 _tokenInitializedSlot = tokenInitializedSlot;
-    assembly {
-      sstore(_tokenInitializedSlot, _tokenInitialized)
-    }
-  }
-
-  //
-  // end hashed pointer setters
   //
 
   // forward any non-matching function calls to PoaCrowdsale master copy
