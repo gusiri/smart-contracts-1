@@ -4,10 +4,17 @@ import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./PoaCommon.sol";
 
-/* solium-disable security/no-block-members */
 /* solium-disable security/no-low-level-calls */
 
 
+/*
+This acts as a master copy for use with PoaProxy in conjunction
+with PoaCrowdsale. Storage is assumed to be set on PoaProxy through
+delegatecall in fallback function. This contract handles the
+token/dividends functionality of PoaProxy. Inherited PoaCommon dictates
+common storage slots to operate on as well as common functions used by
+both PoaToken and PoaCrowdsale.
+*/
 contract PoaToken is StandardToken, Ownable, PoaCommon {
   uint256 public constant tokenVersion = 1;
 
@@ -21,8 +28,6 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
   bytes32 private symbol32;
   // ERC0 decimals
   uint256 public constant decimals = 18;
-  // ‰ permille NOT percent: fee paid to BBK holders through ACT
-  uint256 public constant feeRate = 5;
   // the total per token payout rate: accumulates as payouts are received
   uint256 public totalPerTokenPayout;
   // used to enable/disable whitelist required transfers/transferFroms
@@ -88,6 +93,11 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     _;
   }
 
+  /*
+  proxied contracts cannot have constructors. This works in place
+  of the constructor in order to initialize the contract with
+  correct storage that is needed
+  */
   function initializeToken(
     bytes32 _name32, // bytes32 of name string
     bytes32 _symbol32, // bytes32 of symbol string
@@ -108,16 +118,17 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     require(_registry != address(0));
     require(_totalSupply >= 1e18);
 
-    // initialize storage
+    // initialize sequential storage
     name32 = _name32;
     symbol32 = _symbol32;
+    whitelistTransfers = false;
+    owner = getContractAddress("PoaManager");
+
+    // initialize non-sequential storage
     setCustodian(_custodian);
     setRegistry(_registry);
     setTotalSupply(_totalSupply);
     setPaused(true);
-    whitelistTransfers = false;
-    owner = getContractAddress("PoaManager");
-
     setTokenInitialized(true);
 
     return true;
@@ -211,6 +222,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
   // start getter functions
   //
 
+  // returns string coverted from bytes32 representation of name
   function name()
     external
     view
@@ -219,6 +231,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     return to32LengthString(name32);
   }
 
+  // returns strig converted from bytes32 representation of symbol
   function symbol()
     external
     view
@@ -337,7 +350,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     return true;
   }
 
-  // claim total Ξ claimable for sender based on token holdings at time of each payout
+  // claim total eth claimable for sender based on token holdings at time of each payout
   function claim()
     external
     atEitherStage(Stages.Active, Stages.Terminated)
@@ -526,7 +539,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
   // end ERC20 overrides
   //
 
-  // forward any non-matching function calls to PoaCrowdsale master copy
+  // forward any non-matching function calls to poaCrowdsaleMaster
   function()
     external
     payable
