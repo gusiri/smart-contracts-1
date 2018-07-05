@@ -84,8 +84,8 @@ const moveTokenToActive = async (poa, fmr) => {
 
   await testStartSale(poa)
   await testBuyRemainingTokens(poa, {
-    // must be accounts 4 - 8 to work with poa test helpers
-    from: accounts[8],
+    // must be accounts 4 - 7 to work with poa test helpers
+    from: accounts[7],
     gasPrice
   })
 

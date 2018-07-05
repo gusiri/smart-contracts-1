@@ -44,8 +44,8 @@ contract PoaToken is PoaBase, StandardToken, Ownable {
   //
   // start special hashed common storage pointers
   //
-  bytes32 private constant poaCrowdsaleMasterSlot = keccak256("PoaCrowdsaleMaster");
 
+  bytes32 private constant poaCrowdsaleMasterSlot = keccak256("PoaCrowdsaleMaster");
 
   //
   // end special hashed common storage pointers
