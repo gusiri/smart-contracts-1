@@ -7,7 +7,6 @@ cache:
 stages:
   - setup
   - test
-  - test-poa-proxy
   - build
   - release
 
