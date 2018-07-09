@@ -1,6 +1,9 @@
 /* eslint-disable no-console */
 const chalk = require('chalk')
 
+// given an offset in second, returns seconds since unix epoch
+const unixTimeWithOffset = offset => Math.floor(Date.now() / 1000) + offset
+
 const deployContracts = async (
   deployer,
   accounts,
@@ -51,7 +54,8 @@ const deployContracts = async (
 
   console.log(chalk.yellow('deploying BrickblockAccount...'))
   //BrickblockAccount
-  await deployer.deploy(BrickblockAccount, reg.address, 100, {
+  const releaseTime = unixTimeWithOffset(60 * 60 * 24 * 365 * 2) // 2 years in seconds
+  await deployer.deploy(BrickblockAccount, reg.address, releaseTime, {
     from: owner
   })
   const bat = await BrickblockAccount.deployed()
