@@ -16,7 +16,8 @@ const deployContracts = async (
     FeeManager,
     CentralLogger,
     PoaManager,
-    PoaToken,
+    PoaTokenMaster,
+    PoaCrowdsale,
     Whitelist,
     ExchangeRateProvider,
     ExchangeRateProviderStub
@@ -108,7 +109,12 @@ const deployContracts = async (
 
   console.log(chalk.yellow('deploying PoaTokenMaster...'))
   // PoaToken master
-  const poa = await deployer.deploy(PoaToken)
+  const poaTokenMaster = await deployer.deploy(PoaTokenMaster)
+  console.log(chalk.cyan('deployment successful!'))
+
+  console.log(chalk.yellow('deploying PoaCrowdsale Master...'))
+  // PoaCrowdsale master
+  const poaCrowdsaleMaster = await deployer.deploy(PoaCrowdsale)
   console.log(chalk.cyan('deployment successful!'))
 
   console.log(chalk.yellow('deploying CentralLogger...'))
@@ -129,7 +135,8 @@ const deployContracts = async (
     pmr,
     exr,
     exp,
-    poa,
+    poaTokenMaster,
+    poaCrowdsaleMaster,
     log
   }
 }
@@ -146,7 +153,8 @@ const addContractsToRegistry = async config => {
     fmr, // FeeManager
     log, // Logger
     pmr, // PoaManager
-    poa, // PoaToken master
+    poaTokenMaster,
+    poaCrowdsaleMaster,
     reg, // ContractRegistry
     wht // Whitelist
   } = config.contracts
@@ -177,9 +185,19 @@ const addContractsToRegistry = async config => {
     reg.updateContractAddress('PoaManager', pmr.address, {
       from: owner
     }),
-    reg.updateContractAddress('PoaTokenMaster', poa.address, {
+    reg.updateContractAddress('PoaTokenMaster', poaTokenMaster.address, {
       from: owner
     }),
+    reg.updateContractAddress('PoaTokenMaster', poaTokenMaster.address, {
+      from: owner
+    }),
+    reg.updateContractAddress(
+      'PoaCrowdsaleMaster',
+      poaCrowdsaleMaster.address,
+      {
+        from: owner
+      }
+    ),
     reg.updateContractAddress('Logger', log.address, {
       from: owner
     })

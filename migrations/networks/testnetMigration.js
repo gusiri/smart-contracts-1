@@ -12,11 +12,12 @@ const testnetMigration = async (deployer, accounts, contracts) => {
   const contributors = accounts.slice(2, 5)
 
   const instances = await deployContracts(deployer, accounts, contracts, {
-    useExpStub: false
+    useExpStub: false //we use real Exchange rate provider here
   })
 
   await addContractsToRegistry({ contracts: instances, owner })
 
+  // we need to finalize bbk distribution in order to lock/unlock tokens and test functionality
   await bbk.finalizeBbk(
     instances.bbk,
     owner,
