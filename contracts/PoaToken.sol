@@ -8,12 +8,12 @@ import "./PoaCommon.sol";
 
 
 /*
-This acts as a master copy for use with PoaProxy in conjunction
-with PoaCrowdsale. Storage is assumed to be set on PoaProxy through
-delegatecall in fallback function. This contract handles the
-token/dividends functionality of PoaProxy. Inherited PoaCommon dictates
-common storage slots to operate on as well as common functions used by
-both PoaToken and PoaCrowdsale.
+  This acts as a master copy for use with PoaProxy in conjunction
+  with PoaCrowdsale. Storage is assumed to be set on PoaProxy through
+  delegatecall in fallback function. This contract handles the
+  token/dividends functionality of PoaProxy. Inherited PoaCommon dictates
+  common storage slots as well as common functions used by both PoaToken
+  and PoaCrowdsale.
 */
 contract PoaToken is StandardToken, Ownable, PoaCommon {
   uint256 public constant tokenVersion = 1;
@@ -47,7 +47,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
   //
 
   /*
-    TODO: perhaps move these to Logger contract since Pausable is 
+    TODO: perhaps move these to Logger contract since Pausable is
     no longer inherited from openzeppelin
   */
   event Pause();
@@ -94,9 +94,8 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
   }
 
   /*
-  proxied contracts cannot have constructors. This works in place
-  of the constructor in order to initialize the contract with
-  correct storage that is needed
+    Proxied contracts cannot have constructors. This works in place
+    of the constructor in order to initialize the contract storage.
   */
   function initializeToken(
     bytes32 _name32, // bytes32 of name string
@@ -159,8 +158,8 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     return true;
   }
 
-  // used when property no longer exists etc. allows for winding down via payouts
-  // can no longer be traded after function is run
+  // Used when asset should no longer be tokenized.
+  // Allows for winding down via payouts, and freeze trading
   function terminate()
     external
     eitherCustodianOrOwner
@@ -184,21 +183,21 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
   // start owner functions
   //
 
-  function pause() 
-    onlyOwner 
-    whenNotPaused 
-    public 
+  function pause()
+    onlyOwner
+    whenNotPaused
+    public
   {
     setPaused(true);
 
     emit Pause();
   }
 
-  function unpause() 
-    onlyOwner 
-    whenPaused 
+  function unpause()
+    onlyOwner
+    whenPaused
     atStage(Stages.Active)
-    public 
+    public
   {
     setPaused(false);
     emit Unpause();
@@ -251,7 +250,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
   // get current payout for perTokenPayout and unclaimed
   function currentPayout
   (
-    address _address, 
+    address _address,
     bool _includeUnclaimed
   )
     public
@@ -259,11 +258,11 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     returns (uint256)
   {
     /*
-      need to check if there have been no payouts
-      safe math will throw otherwise due to dividing 0
+      Need to check if there have been no payouts, otherwise safe math
+      will throw due to dividing by 0.
 
-      The below variable represents the total payout from the per token rate pattern
-      it uses this funky naming pattern in order to differentiate from the unclaimedPayoutTotals
+      The below variable represents the total payout from the per token rate pattern.
+      It uses this funky naming pattern in order to differentiate from the unclaimedPayoutTotals
       which means something very different.
     */
     uint256 _totalPerTokenUnclaimedConverted = totalPerTokenPayout == 0
@@ -273,12 +272,12 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
       .div(1e18);
 
     /*
-    balances may be bumped into unclaimedPayoutTotals in order to
-    maintain balance tracking accross token transfers
+      Balances may be bumped into unclaimedPayoutTotals in order to
+      maintain balance tracking accross token transfers.
 
-    perToken payout rates are stored * 1e18 in order to be kept accurate
-    perToken payout is / 1e18 at time of usage for actual Ξ balances
-    unclaimedPayoutTotals are stored as actual Ξ value no need for rate * balance
+      perToken payout rates are stored * 1e18 in order to be kept accurate
+      perToken payout is / 1e18 at time of usage for actual Ξ balances
+      unclaimedPayoutTotals are stored as actual Ξ value no need for rate * balance
     */
     return _includeUnclaimed
       ? _totalPerTokenUnclaimedConverted.add(unclaimedPayoutTotals(_address))
@@ -290,7 +289,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
   // to ensure that token transfers will not result in inaccurate balances
   function settleUnclaimedPerTokenPayouts
   (
-    address _from, 
+    address _from,
     address _to
   )
     internal
@@ -328,9 +327,9 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     // deduct fee from payout
     uint256 _payoutAmount = msg.value.sub(_fee);
     /*
-    totalPerTokenPayout is a rate at which to payout based on token balance
-    it is stored as * 1e18 in order to keep accuracy
-    it is / 1e18 when used relating to actual Ξ values
+      totalPerTokenPayout is a rate at which to payout based on token balance
+      it is stored as * 1e18 in order to keep accuracy
+      it is / 1e18 when used relating to actual Ξ values
     */
     totalPerTokenPayout = totalPerTokenPayout
       .add(_payoutAmount
@@ -357,9 +356,9 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     returns (uint256)
   {
     /*
-    pass true to currentPayout in order to get both:
-      perToken payouts
-      unclaimedPayoutTotals
+      pass true to currentPayout in order to get both:
+      - perToken payouts
+      - unclaimedPayoutTotals
     */
     uint256 _payoutAmount = currentPayout(msg.sender, true);
     // check that there indeed is a pending payout for sender
@@ -446,7 +445,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
 
   /*
     ERC20 transfer override:
-      uses NoobCoin pattern combined with settling payout balances each time run
+    - uses NoobCoin pattern combined with settling payout balances
   */
   function transfer
   (
@@ -472,7 +471,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
 
   /*
     ERC20 transfer override:
-      uses NoobCoin pattern combined with settling payout balances each time run
+    - uses NoobCoin pattern combined with settling payout balances
   */
   function transferFrom
   (
@@ -501,23 +500,23 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
 
   function approve
   (
-    address _spender, 
+    address _spender,
     uint256 _value
-  ) 
-    public 
-    whenNotPaused 
-    returns (bool) 
+  )
+    public
+    whenNotPaused
+    returns (bool)
   {
     return super.approve(_spender, _value);
   }
 
   function increaseApproval
   (
-    address _spender, 
+    address _spender,
     uint _addedValue
-  ) 
-    public 
-    whenNotPaused 
+  )
+    public
+    whenNotPaused
     returns (bool success)
   {
     return super.increaseApproval(_spender, _addedValue);
@@ -525,12 +524,12 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
 
   function decreaseApproval
   (
-    address _spender, 
+    address _spender,
     uint _subtractedValue
   )
-    public 
-    whenNotPaused 
-    returns (bool success) 
+    public
+    whenNotPaused
+    returns (bool success)
   {
     return super.decreaseApproval(_spender, _subtractedValue);
   }

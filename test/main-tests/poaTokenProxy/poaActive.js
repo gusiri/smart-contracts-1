@@ -48,8 +48,8 @@ describe('when in Active (stage 4)', () => {
       const neededTime = await determineNeededTimeTravel(poa)
       await timeTravel(neededTime)
       await testStartSale(poa)
-      // move into Pending
 
+      // move into Pending
       await testBuyTokens(poa, {
         from: whitelistedPoaBuyers[0],
         value: defaultBuyAmount,

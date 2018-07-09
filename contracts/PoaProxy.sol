@@ -6,17 +6,17 @@ import "./PoaProxyCommon.sol";
 
 
 /*
-This is the contract where all poa storage is set.
-It uses chained delegatecalls to use functions from
-PoaToken and PoaCrowdsale and set the resulting storage
-here on PoaProxy.
+  This is the contract where all poa storage is set.
+  It uses chained delegatecalls to use functions from
+  PoaToken and PoaCrowdsale and set the resulting storage
+  here on PoaProxy.
 */
 contract PoaProxy is PoaProxyCommon {
   uint8 public constant version = 1;
 
   event ProxyUpgradedEvent(address upgradedFrom, address upgradedTo);
 
-  // set addresses to chain 
+  // set addresses to chain
   constructor(
     address _poaTokenMaster,
     address _poaCrowdsaleMaster,
@@ -40,7 +40,7 @@ contract PoaProxy is PoaProxyCommon {
   //
 
   // ensures that address has code/is contract
-  function proxyIsContract(address _address)
+  function isContract(address _address)
     private
     view
     returns (bool)
@@ -66,7 +66,7 @@ contract PoaProxy is PoaProxyCommon {
     require(msg.sender == getContractAddress("PoaManager"));
     require(_newMaster != address(0));
     require(poaTokenMaster() != _newMaster);
-    require(proxyIsContract(_newMaster));
+    require(isContract(_newMaster));
     address _oldMaster = poaTokenMaster();
     setPoaTokenMaster(_newMaster);
 
@@ -87,7 +87,7 @@ contract PoaProxy is PoaProxyCommon {
     require(msg.sender == getContractAddress("PoaManager"));
     require(_newMaster != address(0));
     require(poaCrowdsaleMaster() != _newMaster);
-    require(proxyIsContract(_newMaster));
+    require(isContract(_newMaster));
     address _oldMaster = poaCrowdsaleMaster();
     setPoaCrowdsaleMaster(_newMaster);
 

@@ -9,7 +9,7 @@ const ExchangeRates = artifacts.require('ExchangeRates')
 const FeeManager = artifacts.require('FeeManager')
 const PoaManager = artifacts.require('PoaManager')
 const PoaTokenMaster = artifacts.require('PoaToken')
-const PoaCrowdsale = artifacts.require('PoaCrowdsale')
+const PoaCrowdsaleMaster = artifacts.require('PoaCrowdsale')
 const Whitelist = artifacts.require('Whitelist')
 const ExchangeRateProviderStub = artifacts.require(
   'stubs/ExchangeRateProviderStub'
@@ -29,7 +29,7 @@ const contracts = {
   CentralLogger,
   PoaManager,
   PoaTokenMaster,
-  PoaCrowdsale,
+  PoaCrowdsaleMaster,
   Whitelist,
   ExchangeRateProvider,
   ExchangeRateProviderStub

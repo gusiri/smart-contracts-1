@@ -7,18 +7,18 @@ import "./PoaCommon.sol";
 
 
 /*
-This acts as a master copy for use with PoaProxy in conjunction
-with PoaToken. Storage is assumed to be set on PoaProxy through
-delegatecall in fallback function. This contract handles the
-crowdsale functionality of PoaProxy. Inherited PoaCommon dictates
-common storage slots to operate on as well as common functions used by
-both PoaToken and PoaCrowdsale.
+  This acts as a master copy for use with PoaProxy in conjunction
+  with PoaToken. Storage is assumed to be set on PoaProxy through
+  delegatecall in fallback function. This contract handles the
+  crowdsale functionality of PoaProxy. Inherited PoaCommon dictates
+  common storage slots as well as common functions used by both PoaToken
+  and PoaCrowdsale.
 */
 contract PoaCrowdsale is PoaCommon {
 
   uint256 public constant crowdsaleVersion = 1;
 
-  // Number of digits includud during the percent calculation
+  // Number of digits included during the percent calculation
   uint256 public constant precisionOfPercentCalc = 18;
 
   //
@@ -26,15 +26,15 @@ contract PoaCrowdsale is PoaCommon {
   //
 
   /*
-  These are non-sequential storage slots used in order to not override
-  PoaProxy storage. It is needed for any contract which is the target
-  of a second level delegate call. There is no sequential storage on
-  this contract in order to avoid these collisions.
+    These are non-sequential storage slots used in order to not override
+    PoaProxy storage. It is needed for any contract which is the target
+    of a second level delegate call. There is no sequential storage on
+    this contract in order to avoid these collisions.
   */
 
   // TYPE: BOOL: bool indicating whether or not crowdsale proxy has been initialized
   bytes32 private constant crowdsaleInitializedSlot = keccak256("crowdsaleInitialized");
-  // TYPE: UINT256: used to check when contract should move from 
+  // TYPE: UINT256: used to check when contract should move from
   // PreFunding or FiatFunding to Funding stage
   bytes32 private constant startTimeSlot = keccak256("startTime");
   // TYPE: UINT256: amount of seconds until moving to Failed from
@@ -47,7 +47,7 @@ contract PoaCrowdsale is PoaCommon {
   bytes32 private constant fiatCurrency32Slot = keccak256("fiatCurrency32");
   // TYPE: UINT256: amount needed before moving to pending calculated in fiat
   bytes32 private constant fundingGoalInCentsSlot = keccak256("fundingGoalInCents");
-  // TYPE: UINT256: used for keeping track of actual funded amount in fiat during 
+  // TYPE: UINT256: used for keeping track of actual funded amount in fiat during
   // FiatFunding stage
   bytes32 private constant fundedAmountInCentsDuringFiatFundingSlot
   = keccak256("fundedAmountInCentsDuringFiatFunding");
@@ -77,7 +77,7 @@ contract PoaCrowdsale is PoaCommon {
     ) {
       enterStage(Stages.Failed);
     }
-    
+
     _;
   }
 
@@ -92,9 +92,8 @@ contract PoaCrowdsale is PoaCommon {
   //
 
   /*
-  proxied contracts cannot have constructors. This works in place
-  of the constructor in order to initialize the contract with
-  correct storage that is needed
+    Proxied contracts cannot have constructors. This works in place
+    of the constructor in order to initialize the contract storage.
   */
   function initializeCrowdsale(
     bytes32 _fiatCurrency32, // bytes32 of fiat currency string
@@ -131,10 +130,8 @@ contract PoaCrowdsale is PoaCommon {
 
     // run getRate once in order to see if rate is initialized, throws if not
     require(getFiatRate() > 0);
-    /*
-    set crowdsaleInitialized non-sequentially 
-    to true so cannot be initialized again
-    */
+
+    // set crowdsaleInitialized to true so cannot be initialized again
     setCrowdsaleInitialized(true);
 
     return true;
@@ -169,7 +166,7 @@ contract PoaCrowdsale is PoaCommon {
   // Buy with FIAT
   function buyFiat
   (
-    address _contributor, 
+    address _contributor,
     uint256 _amountInCents
   )
     external
@@ -177,7 +174,7 @@ contract PoaCrowdsale is PoaCommon {
     onlyCustodian
     returns (bool)
   {
-    // Do not allow funding less then 100 cents
+    // Do not allow funding less than 100 cents
     require(_amountInCents >= 100);
 
     uint256 _newFundedAmount = fundedAmountInCentsDuringFiatFunding().add(_amountInCents);
@@ -197,7 +194,7 @@ contract PoaCrowdsale is PoaCommon {
         fundedAmountInTokensDuringFiatFunding().add(_tokenAmount)
       );
       setFiatInvestmentPerUserInTokens(
-        _contributor, 
+        _contributor,
         fiatInvestmentPerUserInTokens(_contributor).add(_tokenAmount)
       );
 
@@ -205,10 +202,10 @@ contract PoaCrowdsale is PoaCommon {
         enterStage(Stages.Pending);
       }
 
-      return true;    
+      return true;
     } else {
       return false;
-    } 
+    }
   }
 
   // buy tokens
@@ -264,7 +261,7 @@ contract PoaCrowdsale is PoaCommon {
   {
     // save this for later in case needing to reclaim
     setInvestmentAmountPerUserInWei(
-      msg.sender, 
+      msg.sender,
       investmentAmountPerUserInWei(msg.sender).add(_payAmount)
     );
     // increment the funded amount
@@ -323,7 +320,7 @@ contract PoaCrowdsale is PoaCommon {
     // can now be claimed by broker via claim function
     // should only be buy()s - fee. this ensures buy() dust is cleared
     setUnclaimedPayoutTotals(
-      broker(), 
+      broker(),
       unclaimedPayoutTotals(broker()).add(address(this).balance)
     );
     // allow trading of tokens
@@ -380,7 +377,7 @@ contract PoaCrowdsale is PoaCommon {
     returns (bool)
   {
     enterStage(Stages.Cancelled);
-    
+
     return true;
   }
 
@@ -508,11 +505,11 @@ contract PoaCrowdsale is PoaCommon {
   //
 
   /*
-  Each function in this section without "set" prefix is a getter for a specific 
-  non-sequential storage  slot which can be called by either a user or the contract. 
-  Functions with "set" are internal and can only be called by the contract/inherited contracts.
+    Each function in this section without "set" prefix is a getter for a specific
+    non-sequential storage slot which are public and can be called by a user or contract.
+    Functions with "set" are internal and can only be called by the contract/inherited contracts.
 
-  Both getters and setters work on commonly agreed up storage slots in order to avoid collisions.
+    Both getters and setters use commonly agreed upon storage slots to avoid collisions.
   */
 
   function crowdsaleInitialized()
