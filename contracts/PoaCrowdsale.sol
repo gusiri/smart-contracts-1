@@ -6,11 +6,17 @@ import "./PoaCommon.sol";
 /* solium-disable security/no-low-level-calls */
 
 
+/*
+This acts as a master copy for use with PoaProxy in conjunction
+with PoaToken. Storage is assumed to be set on PoaProxy through
+delegatecall in fallback function. This contract handles the
+crowdsale functionality of PoaProxy. Inherited PoaCommon dictates
+common storage slots to operate on as well as common functions used by
+both PoaToken and PoaCrowdsale.
+*/
 contract PoaCrowdsale is PoaCommon {
 
   uint256 public constant crowdsaleVersion = 1;
-  // ‰ permille NOT percent: fee paid to BBK holders through ACT
-  uint256 public constant feeRate = 5;
 
   // Number of digits includud during the percent calculation
   uint256 public constant precisionOfPercentCalc = 18;
@@ -19,14 +25,33 @@ contract PoaCrowdsale is PoaCommon {
   // start special hashed PoaCrowdsale pointers
   //
 
+  /*
+  These are non-sequential storage slots used in order to not override
+  PoaProxy storage. It is needed for any contract which is the target
+  of a second level delegate call. There is no sequential storage on
+  this contract in order to avoid these collisions.
+  */
+
+  // TYPE: BOOL: bool indicating whether or not crowdsale proxy has been initialized
   bytes32 private constant crowdsaleInitializedSlot = keccak256("crowdsaleInitialized");
+  // TYPE: UINT256: used to check when contract should move from 
+  // PreFunding or FiatFunding to Funding stage
   bytes32 private constant startTimeSlot = keccak256("startTime");
+  // TYPE: UINT256: amount of seconds until moving to Failed from
+  // Funding stage after startTime
   bytes32 private constant fundingTimeoutSlot = keccak256("fundingTimeout");
+  // TYPE: UINT256: amount of seconds until moving to Failed from
+  // Pending stage after startTime + fundingTimeout
   bytes32 private constant activationTimeoutSlot = keccak256("activationTimeout");
+  // TYPE: BYTES32: bytes32 representation fiat currency symbol used to get rate
   bytes32 private constant fiatCurrency32Slot = keccak256("fiatCurrency32");
+  // TYPE: UINT256: amount needed before moving to pending calculated in fiat
   bytes32 private constant fundingGoalInCentsSlot = keccak256("fundingGoalInCents");
+  // TYPE: UINT256: used for keeping track of actual funded amount in fiat during 
+  // FiatFunding stage
   bytes32 private constant fundedAmountInCentsDuringFiatFundingSlot
   = keccak256("fundedAmountInCentsDuringFiatFunding");
+  // TYPE: ADDRESS: broker who is selling property, whitelisted on PoaManager
   bytes32 private constant brokerSlot = keccak256("broker");
 
   //
@@ -39,6 +64,7 @@ contract PoaCrowdsale is PoaCommon {
   // start modifiers
   //
 
+  // ensure that the contract has not timed out
   modifier checkTimeout() {
     uint256 fundingTimeoutDeadline = startTime().add(fundingTimeout());
     uint256 activationTimeoutDeadline = startTime()
@@ -55,6 +81,7 @@ contract PoaCrowdsale is PoaCommon {
     _;
   }
 
+  // ensure that a buyer is whitelisted before buying
   modifier isBuyWhitelisted() {
     require(checkIsWhitelisted(msg.sender));
     _;
@@ -64,6 +91,11 @@ contract PoaCrowdsale is PoaCommon {
   // end modifiers
   //
 
+  /*
+  proxied contracts cannot have constructors. This works in place
+  of the constructor in order to initialize the contract with
+  correct storage that is needed
+  */
   function initializeCrowdsale(
     bytes32 _fiatCurrency32, // bytes32 of fiat currency string
     address _broker,
@@ -89,7 +121,7 @@ contract PoaCrowdsale is PoaCommon {
     require(_fundingGoalInCents > 0);
     require(totalSupply() > _fundingGoalInCents);
 
-    // initialize storage
+    // initialize non-sequential storage
     setFiatCurrency32(_fiatCurrency32);
     setBroker(_broker);
     setStartTime(_startTime);
@@ -99,6 +131,10 @@ contract PoaCrowdsale is PoaCommon {
 
     // run getRate once in order to see if rate is initialized, throws if not
     require(getFiatRate() > 0);
+    /*
+    set crowdsaleInitialized non-sequentially 
+    to true so cannot be initialized again
+    */
     setCrowdsaleInitialized(true);
 
     return true;
@@ -108,7 +144,8 @@ contract PoaCrowdsale is PoaCommon {
   // start lifecycle functions
   //
 
-  // used to start the FIAT preSale funding
+  // used for moving contract into FiatFunding stage
+  // where fiat purchases can be made
   function startFiatPreSale()
     external
     atStage(Stages.PreFunding)
@@ -118,7 +155,7 @@ contract PoaCrowdsale is PoaCommon {
     return true;
   }
 
-  // used to start the sale as long as startTime has passed
+  // used for starting ETH sale as long as startTime has passed
   function startEthSale()
     external
     atEitherStage(Stages.PreFunding, Stages.FiatFunding)
@@ -297,7 +334,7 @@ contract PoaCrowdsale is PoaCommon {
     return true;
   }
 
-  // used to manually set Stage to Failed when no users have bought any tokens
+  // used for manually setting Stage to Failed when no users have bought any tokens
   // if no buy()s occurred before fundingTimeoutBlock token would be stuck in Funding
   // can also be used when activate is not called by custodian within activationTimeout
   // lastly can also be used when no one else has called reclaim.
@@ -313,7 +350,7 @@ contract PoaCrowdsale is PoaCommon {
     return true;
   }
 
-  // reclaim Ξ for sender if fundingGoalInCents is not met within fundingTimeoutBlock
+  // reclaim eth for sender if fundingGoalInCents is not met within fundingTimeoutBlock
   function reclaim()
     external
     checkTimeout
@@ -335,6 +372,7 @@ contract PoaCrowdsale is PoaCommon {
     return true;
   }
 
+  // set stage to Cancelled
   function setCancelled()
     external
     onlyCustodian
@@ -354,6 +392,7 @@ contract PoaCrowdsale is PoaCommon {
   // start utility functions
   //
 
+  // convert to accurate percent using desired level of precision
   function percent(
     uint256 _numerator,
     uint256 _denominator,
@@ -451,6 +490,7 @@ contract PoaCrowdsale is PoaCommon {
   // start regular getters
   //
 
+  // return converted string from  bytes32 fiatCurrency32
   function fiatCurrency()
     public
     view
@@ -459,21 +499,21 @@ contract PoaCrowdsale is PoaCommon {
     return to32LengthString(fiatCurrency32());
   }
 
-  function proofOfCustody()
-    public
-    view
-    returns (string)
-  {
-    return to64LengthString(proofOfCustody32());
-  }
-
   //
   // end regular getters
   //
 
   //
-  // start hashed pointer getters
+  // start non-sequential storage getters/setters
   //
+
+  /*
+  Each function in this section without "set" prefix is a getter for a specific 
+  non-sequential storage  slot which can be called by either a user or the contract. 
+  Functions with "set" are internal and can only be called by the contract/inherited contracts.
+
+  Both getters and setters work on commonly agreed up storage slots in order to avoid collisions.
+  */
 
   function crowdsaleInitialized()
     public
@@ -483,6 +523,17 @@ contract PoaCrowdsale is PoaCommon {
     bytes32 _crowdsaleInitializedSlot = crowdsaleInitializedSlot;
     assembly {
       _crowdsaleInitialized := sload(_crowdsaleInitializedSlot)
+    }
+  }
+
+  function setCrowdsaleInitialized(
+    bool _crowdsaleInitialized
+  )
+    internal
+  {
+    bytes32 _crowdsaleInitializedSlot = crowdsaleInitializedSlot;
+    assembly {
+      sstore(_crowdsaleInitializedSlot, _crowdsaleInitialized)
     }
   }
 
@@ -497,91 +548,6 @@ contract PoaCrowdsale is PoaCommon {
     }
   }
 
-  function fundingTimeout()
-    public
-    view
-    returns (uint256 _fundingTimeout)
-  {
-    bytes32 _fundingTimeoutSlot = fundingTimeoutSlot;
-    assembly {
-      _fundingTimeout := sload(_fundingTimeoutSlot)
-    }
-  }
-
-  function activationTimeout()
-    public
-    view
-    returns (uint256 _activationTimeout)
-  {
-    bytes32 _activationTimeoutSlot = activationTimeoutSlot;
-    assembly {
-      _activationTimeout := sload(_activationTimeoutSlot)
-    }
-  }
-
-  function fiatCurrency32()
-    internal
-    view
-    returns (bytes32 _fiatCurrency32)
-  {
-    bytes32 _fiatCurrency32Slot = fiatCurrency32Slot;
-    assembly {
-      _fiatCurrency32 := sload(_fiatCurrency32Slot)
-    }
-  }
-
-  function fundingGoalInCents()
-    public
-    view
-    returns (uint256 _fundingGoalInCents)
-  {
-    bytes32 _fundingGoalInCentsSlot = fundingGoalInCentsSlot;
-    assembly {
-      _fundingGoalInCents := sload(_fundingGoalInCentsSlot)
-    }
-  }
-
-  function fundedAmountInCentsDuringFiatFunding()
-    public
-    view
-    returns (uint256 _fundedAmountInCentsDuringFiatFunding)
-  {
-    bytes32 _fundedAmountInCentsDuringFiatFundingSlot = fundedAmountInCentsDuringFiatFundingSlot;
-    assembly {
-      _fundedAmountInCentsDuringFiatFunding := sload(_fundedAmountInCentsDuringFiatFundingSlot)
-    }
-  }
-
-  function broker()
-    public
-    view
-    returns (address _broker)
-  {
-    bytes32 _brokerSlot = brokerSlot;
-    assembly {
-      _broker := sload(_brokerSlot)
-    }
-  }
-
-  //
-  // end  hashed pointer getters
-  //
-
-  //
-  // start hashed pointer setters
-  //
-
-  function setCrowdsaleInitialized(
-    bool _crowdsaleInitialized
-  )
-    internal
-  {
-    bytes32 _crowdsaleInitializedSlot = crowdsaleInitializedSlot;
-    assembly {
-      sstore(_crowdsaleInitializedSlot, _crowdsaleInitialized)
-    }
-  }
-
   function setStartTime(
     uint256 _startTime
   )
@@ -590,6 +556,17 @@ contract PoaCrowdsale is PoaCommon {
     bytes32 _startTimeSlot = startTimeSlot;
     assembly {
       sstore(_startTimeSlot, _startTime)
+    }
+  }
+
+  function fundingTimeout()
+    public
+    view
+    returns (uint256 _fundingTimeout)
+  {
+    bytes32 _fundingTimeoutSlot = fundingTimeoutSlot;
+    assembly {
+      _fundingTimeout := sload(_fundingTimeoutSlot)
     }
   }
 
@@ -604,6 +581,17 @@ contract PoaCrowdsale is PoaCommon {
     }
   }
 
+  function activationTimeout()
+    public
+    view
+    returns (uint256 _activationTimeout)
+  {
+    bytes32 _activationTimeoutSlot = activationTimeoutSlot;
+    assembly {
+      _activationTimeout := sload(_activationTimeoutSlot)
+    }
+  }
+
   function setActivationTimeout(
     uint256 _activationTimeout
   )
@@ -612,6 +600,17 @@ contract PoaCrowdsale is PoaCommon {
     bytes32 _activationTimeoutSlot = activationTimeoutSlot;
     assembly {
       sstore(_activationTimeoutSlot, _activationTimeout)
+    }
+  }
+
+  function fiatCurrency32()
+    internal
+    view
+    returns (bytes32 _fiatCurrency32)
+  {
+    bytes32 _fiatCurrency32Slot = fiatCurrency32Slot;
+    assembly {
+      _fiatCurrency32 := sload(_fiatCurrency32Slot)
     }
   }
 
@@ -626,6 +625,17 @@ contract PoaCrowdsale is PoaCommon {
     }
   }
 
+  function fundingGoalInCents()
+    public
+    view
+    returns (uint256 _fundingGoalInCents)
+  {
+    bytes32 _fundingGoalInCentsSlot = fundingGoalInCentsSlot;
+    assembly {
+      _fundingGoalInCents := sload(_fundingGoalInCentsSlot)
+    }
+  }
+
   function setFundingGoalInCents(
     uint256 _fundingGoalInCents
   )
@@ -637,6 +647,17 @@ contract PoaCrowdsale is PoaCommon {
     }
   }
 
+  function fundedAmountInCentsDuringFiatFunding()
+    public
+    view
+    returns (uint256 _fundedAmountInCentsDuringFiatFunding)
+  {
+    bytes32 _fundedAmountInCentsDuringFiatFundingSlot = fundedAmountInCentsDuringFiatFundingSlot;
+    assembly {
+      _fundedAmountInCentsDuringFiatFunding := sload(_fundedAmountInCentsDuringFiatFundingSlot)
+    }
+  }
+
   function setFundedAmountInCentsDuringFiatFunding(
     uint256 _fundedAmountInCentsDuringFiatFunding
   )
@@ -645,6 +666,17 @@ contract PoaCrowdsale is PoaCommon {
     bytes32 _fundedAmountInCentsDuringFiatFundingSlot = fundedAmountInCentsDuringFiatFundingSlot;
     assembly {
       sstore(_fundedAmountInCentsDuringFiatFundingSlot, _fundedAmountInCentsDuringFiatFunding)
+    }
+  }
+
+  function broker()
+    public
+    view
+    returns (address _broker)
+  {
+    bytes32 _brokerSlot = brokerSlot;
+    assembly {
+      _broker := sload(_brokerSlot)
     }
   }
 
@@ -660,7 +692,7 @@ contract PoaCrowdsale is PoaCommon {
   }
 
   //
-  // end hashed pointer setters
+  // end non-sequential storage getters/setters
   //
 
 }

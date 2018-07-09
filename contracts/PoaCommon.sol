@@ -3,10 +3,19 @@ pragma solidity 0.4.23;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./PoaProxyCommon.sol";
 
-/* solium-disable security/no-block-members */
 /* solium-disable security/no-low-level-calls */
 
 
+/*
+PoaCommon acts as "contract" between PoaToken and PoaCrowdsale
+to use agreed upon non-sequential storage for getting/setting
+variables which are in common use.
+
+It also has a set of functions which are used by both contracts.
+
+It also inherits from PoaProxyCommon in order to adhere to agreed
+upon storage slots for getting/setting PoaProxy related storage
+*/
 contract PoaCommon is PoaProxyCommon {
   using SafeMath for uint256;
 
@@ -14,6 +23,8 @@ contract PoaCommon is PoaProxyCommon {
   // ‰ permille NOT percent: fee paid to BBK holders through ACT
   uint256 public constant feeRate = 5;
 
+  // enum representing different stages a contract can be in
+  // different stages enable/restrict certain functionality
   enum Stages {
     PreFunding, // 0
     FiatFunding, // 1
@@ -29,28 +40,42 @@ contract PoaCommon is PoaProxyCommon {
   // start common non-sequential storage pointers
   //
 
-  // represents slot for: Stage
+  /*
+  These are commonly agreed upon storage slots
+  which other contracts can use in order to operate on the
+  same storage slots.
+
+  Constants do not use storage so they do not override 
+  storage themselves.
+  */
+
+  // TYPE: Stage: represents current stage enabling/restricting functionality
   bytes32 internal constant stageSlot = keccak256("stage");
-  // represents slot for: address
+  // TYPE: ADDRESS: custodian in charge of taking care of asset and payouts
   bytes32 internal constant custodianSlot = keccak256("custodian");
-  // represents slot for: bytes32[2] TODO: probably need to fix getters/setters
+  // TYPE: bytes32[2]: ipfs hash for proof of custody by custodian
   bytes32 internal constant proofOfCustody32Slot = keccak256("proofOfCustody32");
-  // represents slot for: uint256
+  // TYPE: UINT256: ERC20 totalSupply
   bytes32 internal constant totalSupplySlot = keccak256("totalSupply");
-  // represents slot for: uint256
+  // TYPE: UINT256: used to keep track of actual funded amount in POA 
+  // token during FiatFunding stage
   bytes32 internal constant fundedAmountInTokensDuringFiatFundingSlot = 
   keccak256("fundedAmountInTokensDuringFiatFunding");
-  // represents slot for: mapping(address => uint256)
+  // TYPE: mapping(address => uint256): amount fiat invested per user. 
+  // used for balance calculations
   bytes32 internal constant fiatInvestmentPerUserInTokensSlot = 
   keccak256("fiatInvestmentPerUserInTokens");
-  // represents slot for: uint256
+  // TYPE: UINT256: used for tracking fiat pre sale contributors
   bytes32 internal constant fundedAmountInWeiSlot = keccak256("fundedAmountInWei");
-  // represents slot for: mapping(address => uint256)
+  // TYPE: mapping(address => uint256): used for keeping track of of actual 
+  // fundedAmount in eth
   bytes32 internal constant investmentAmountPerUserInWeiSlot = 
   keccak256("investmentAmountPerUserInWei");
-  // represents slot for: mapping(address => uint256)
+  // TYPE: mapping(address => uint256): per user invested in wei used for balance calculations
   bytes32 internal constant unclaimedPayoutTotalsSlot = keccak256("unclaimedPayoutTotals");
+  // TYPE: BOOL: used for enabling/disabling token movements
   bytes32 internal constant pausedSlot = keccak256("paused");
+  // TYPE: BOOL: indicates if poaToken has been initialized
   bytes32 internal constant tokenInitializedSlot = keccak256("tokenInitialized");
 
   //
@@ -161,44 +186,6 @@ contract PoaCommon is PoaProxyCommon {
     returns(bool)
   {
     return fiatInvestmentPerUserInTokens(_buyer) != 0;
-  }
-
-  // gets a given contract address by bytes32 saving gas
-  function getContractAddress
-  (
-    string _name
-  )
-    public
-    view
-    returns (address _contractAddress)
-  {
-    bytes4 _sig = bytes4(keccak256("getContractAddress32(bytes32)"));
-    bytes32 _name32 = keccak256(_name);
-    address _registry = registry();
-
-    assembly {
-      let _call := mload(0x40)          // set _call to free memory pointer
-      mstore(_call, _sig)               // store _sig at _call pointer
-      mstore(add(_call, 0x04), _name32) // store _name32 at _call offset by 4 bytes for pre-existing _sig
-
-      // staticcall(g, a, in, insize, out, outsize) => 0 on error 1 on success
-      let success := staticcall(
-        gas,    // g = gas: whatever was passed already
-        _registry,  // a = address: address in storage
-        _call,  // in = mem in  mem[in..(in+insize): set to free memory pointer
-        0x24,   // insize = mem insize  mem[in..(in+insize): size of sig (bytes4) + bytes32 = 0x24
-        _call,   // out = mem out  mem[out..(out+outsize): output assigned to this storage address
-        0x20    // outsize = mem outsize  mem[out..(out+outsize): output should be 32byte slot (address size = 0x14 <  slot size 0x20)
-      )
-
-      // revert if not successful
-      if iszero(success) {
-        revert(0, 0)
-      }
-
-      _contractAddress := mload(_call) // assign result to return value
-      mstore(0x40, add(_call, 0x24)) // advance free memory pointer by largest _call size
-    }
   }
 
     // use assembly in order to avoid gas usage which is too high
@@ -346,6 +333,14 @@ contract PoaCommon is PoaProxyCommon {
   // start common non-sequential storage getters/setters
   //
 
+  /*
+  Each function in this section without "set" prefix is a getter for a specific 
+  non-sequential storage  slot which can be called by either a user or the contract. 
+  Functions with "set" are internal and can only be called by the contract/inherited contracts.
+
+  Both getters and setters work on commonly agreed up storage slots in order to avoid collisions.
+  */
+
   function stage()
     public
     view
@@ -475,9 +470,8 @@ contract PoaCommon is PoaProxyCommon {
     view
     returns (uint256 _fiatInvested)
   {
-    bytes32 _fiatInvestmentPerUserInTokensSlot = fiatInvestmentPerUserInTokensSlot;
     bytes32 _entrySlot = keccak256(
-      abi.encodePacked(_address, _fiatInvestmentPerUserInTokensSlot)
+      abi.encodePacked(_address, fiatInvestmentPerUserInTokensSlot)
     );
     assembly {
       _fiatInvested := sload(_entrySlot)
