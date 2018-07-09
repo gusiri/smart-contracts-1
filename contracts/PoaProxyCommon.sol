@@ -114,7 +114,7 @@ contract PoaProxyCommon {
   }
 
   //
-  // start proxy common non-sequential storage getters/setters
+  // end proxy common non-sequential storage getters/setters
   //
 
   //
