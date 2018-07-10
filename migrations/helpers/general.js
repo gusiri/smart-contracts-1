@@ -1,6 +1,10 @@
 /* eslint-disable no-console */
 const chalk = require('chalk')
 
+let web3
+
+const setWeb3 = _web3 => (web3 = _web3)
+
 // given an offset in second, returns seconds since unix epoch
 const unixTimeWithOffset = offset => Math.floor(Date.now() / 1000) + offset
 
@@ -27,6 +31,8 @@ const deployContracts = async (
   } = contracts
   const owner = accounts[0]
   const bonusAddress = accounts[1]
+
+  const ownerPreEtherBalance = await getEtherBalance(owner)
 
   console.log(chalk.yellow('deploying ContractRegistry...'))
   //ContractRegistry
@@ -129,19 +135,27 @@ const deployContracts = async (
   const log = await CentralLogger.deployed()
   console.log(chalk.cyan('deployment successful!'))
 
+  const ownerPostEtherBalance = await getEtherBalance(owner)
+
+  console.log('ownerPostEtherBalance', ownerPostEtherBalance)
+  const gasCost = ownerPreEtherBalance.sub(ownerPostEtherBalance)
+
   return {
-    reg,
-    bbk,
-    act,
-    bat,
-    fmr,
-    wht,
-    pmr,
-    exr,
-    exp,
-    poaTokenMaster,
-    poaCrowdsaleMaster,
-    log
+    contracts: {
+      reg,
+      bbk,
+      act,
+      bat,
+      fmr,
+      wht,
+      pmr,
+      exr,
+      exp,
+      poaTokenMaster,
+      poaCrowdsaleMaster,
+      log
+    },
+    gasCost
   }
 }
 
@@ -163,51 +177,54 @@ const addContractsToRegistry = async config => {
     wht // Whitelist
   } = config.contracts
   const { owner } = config
+  const ownerPreEtherBalance = await getEtherBalance(owner)
 
   await reg.updateContractAddress('BrickblockToken', bbk.address, {
     from: owner
   })
-  await Promise.all([
-    reg.updateContractAddress('AccessToken', act.address, {
+  await reg.updateContractAddress('AccessToken', act.address, {
+    from: owner
+  })
+  await reg.updateContractAddress('ExchangeRates', exr.address, {
+    from: owner
+  })
+  await reg.updateContractAddress('ExchangeRateProvider', exp.address, {
+    from: owner
+  })
+  await reg.updateContractAddress('FeeManager', fmr.address, {
+    from: owner
+  })
+  await reg.updateContractAddress('BrickblockAccount', bat.address, {
+    from: owner
+  })
+  await reg.updateContractAddress('Whitelist', wht.address, {
+    from: owner
+  })
+  await reg.updateContractAddress('PoaManager', pmr.address, {
+    from: owner
+  })
+  await reg.updateContractAddress('PoaTokenMaster', poaTokenMaster.address, {
+    from: owner
+  })
+  await reg.updateContractAddress('PoaTokenMaster', poaTokenMaster.address, {
+    from: owner
+  })
+  await reg.updateContractAddress(
+    'PoaCrowdsaleMaster',
+    poaCrowdsaleMaster.address,
+    {
       from: owner
-    }),
-    reg.updateContractAddress('ExchangeRates', exr.address, {
-      from: owner
-    }),
-    reg.updateContractAddress('ExchangeRateProvider', exp.address, {
-      from: owner
-    }),
-    reg.updateContractAddress('FeeManager', fmr.address, {
-      from: owner
-    }),
-    reg.updateContractAddress('BrickblockAccount', bat.address, {
-      from: owner
-    }),
-    reg.updateContractAddress('Whitelist', wht.address, {
-      from: owner
-    }),
-    reg.updateContractAddress('PoaManager', pmr.address, {
-      from: owner
-    }),
-    reg.updateContractAddress('PoaTokenMaster', poaTokenMaster.address, {
-      from: owner
-    }),
-    reg.updateContractAddress('PoaTokenMaster', poaTokenMaster.address, {
-      from: owner
-    }),
-    reg.updateContractAddress(
-      'PoaCrowdsaleMaster',
-      poaCrowdsaleMaster.address,
-      {
-        from: owner
-      }
-    ),
-    reg.updateContractAddress('Logger', log.address, {
-      from: owner
-    })
-  ])
+    }
+  )
+  await reg.updateContractAddress('Logger', log.address, {
+    from: owner
+  })
+  const ownerPostEtherBalance = await getEtherBalance(owner)
 
+  const gasCost = ownerPreEtherBalance.sub(ownerPostEtherBalance)
   console.log(chalk.cyan('registry update successful!'))
+
+  return { gasCost }
 }
 
 const setFiatRate = async (exr, exp, queryType, rate, useStub, config) => {
@@ -229,8 +246,20 @@ const setFiatRate = async (exr, exp, queryType, rate, useStub, config) => {
   }
 }
 
+const getEtherBalance = address => {
+  return new Promise((resolve, reject) => {
+    web3.eth.getBalance(address, (err, res) => {
+      if (err) reject(err)
+
+      resolve(res)
+    })
+  })
+}
+
 module.exports = {
+  setWeb3,
   deployContracts,
   addContractsToRegistry,
-  setFiatRate
+  setFiatRate,
+  getEtherBalance
 }

@@ -14,6 +14,8 @@ const Whitelist = artifacts.require('Whitelist')
 const ExchangeRateProviderStub = artifacts.require(
   'stubs/ExchangeRateProviderStub'
 )
+const { setWeb3 } = require('./helpers/general.js')
+setWeb3(web3)
 
 const { localMigration } = require('./networks/localMigration')
 const { testnetMigration } = require('./networks/testnetMigration')
@@ -37,7 +39,6 @@ const contracts = {
 
 module.exports = (deployer, network, accounts) => {
   console.log(`deploying on ${network} network`)
-
   deployer
     .then(async () => {
       switch (network) {
@@ -45,11 +46,12 @@ module.exports = (deployer, network, accounts) => {
         case 'test':
           return true
         case 'dev':
-          await localMigration(deployer, accounts, contracts)
+          await localMigration(deployer, accounts, contracts, web3)
           return true
         case 'rinkeby':
         case 'kovan':
-          await testnetMigration(deployer, accounts, contracts)
+        case 'hdwallet':
+          await testnetMigration(deployer, accounts, contracts, web3)
           return true
         default:
           console.log(
