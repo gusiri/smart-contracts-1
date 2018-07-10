@@ -172,7 +172,7 @@ describe('when in FIAT Funding (stage 1)', () => {
 
     it('should increment the token amount if the same investor buys again', async () => {
       const remainingAmountInCents = await getRemainingAmountInCents(poa)
-      const invesmentAmountInCents = remainingAmountInCents
+      const investmentAmountInCents = remainingAmountInCents
         .div(2)
         .floor()
         .toNumber()
@@ -180,18 +180,18 @@ describe('when in FIAT Funding (stage 1)', () => {
       await testIncrementOfBalanceWhenBuyTokensWithFiat(
         poa,
         fiatInvestor,
-        invesmentAmountInCents
+        investmentAmountInCents
       )
     })
 
     it('should NOT allow buying more than funding goal in cents', async () => {
       const fundingGoal = await poa.fundingGoalInCents()
-      const invesmentAmountInCents = fundingGoal.add(1)
+      const investmentAmountInCents = fundingGoal.add(1)
 
       await testWillThrow(testBuyTokensWithFiat, [
         poa,
         fiatInvestor,
-        invesmentAmountInCents,
+        investmentAmountInCents,
         {
           from: custodian,
           gasPrice
@@ -226,7 +226,7 @@ describe('when in FIAT Funding (stage 1)', () => {
   })
 })
 
-describe('when in FIAT Funding (stage 1) and funding goal meets during the fiat funding', () => {
+describe('when in FIAT Funding (stage 1) and funding goal is met during the fiat funding', () => {
   contract('PoaToken', accounts => {
     let poa
     const fiatInvestor = accounts[3]
@@ -241,9 +241,9 @@ describe('when in FIAT Funding (stage 1) and funding goal meets during the fiat 
 
     it('Should set correct amount of tokens for investor if invested amount equals funding goal', async () => {
       const totalSupply = await poa.totalSupply()
-      const invesmentAmountInCents = await getRemainingAmountInCents(poa)
+      const investmentAmountInCents = await getRemainingAmountInCents(poa)
 
-      await testBuyTokensWithFiat(poa, fiatInvestor, invesmentAmountInCents, {
+      await testBuyTokensWithFiat(poa, fiatInvestor, investmentAmountInCents, {
         from: custodian,
         gasPrice
       })
@@ -262,20 +262,20 @@ describe('when in FIAT Funding (stage 1) and funding goal meets during the fiat 
       assert.equal(
         postStage.toString(),
         stages.Pending,
-        'Contract should be on Pending stage after funding goal meets'
+        'Contract should be in Pending stage after funding goal meets'
       )
     })
 
     it('Should set correct amount of tokens after many investment rounds for investor if invested amount equals funding goal', async () => {
       const totalSupply = await poa.totalSupply()
       const fundingGoalInCents = await poa.fundingGoalInCents()
-      const invesmentAmountInCentsPerBuy = fundingGoalInCents.div(5)
+      const investmentAmountInCentsPerBuy = fundingGoalInCents.div(5)
 
       for (let index = 0; index < 5; index++) {
         await testIncrementOfBalanceWhenBuyTokensWithFiat(
           poa,
           fiatInvestor,
-          invesmentAmountInCentsPerBuy
+          investmentAmountInCentsPerBuy
         )
       }
 
@@ -293,7 +293,7 @@ describe('when in FIAT Funding (stage 1) and funding goal meets during the fiat 
       assert.equal(
         postStage.toString(),
         stages.Pending,
-        'The contract should be on Pending stage after funding goal meets'
+        'The contract should be in Pending stage after funding goal meets'
       )
     })
   })

@@ -27,14 +27,14 @@ const {
   stages
 } = require('./poa')
 const {
-  getAllSimpleStorage,
+  getAllSequentialStorage,
   bytes32StorageToAscii,
   getNestedMappingStorage,
   trimBytes
 } = require('./storage')
 
 const checkPreSetupStorage = async poa => {
-  const storage = await getAllSimpleStorage(poa.address)
+  const storage = await getAllSequentialStorage(poa.address)
 
   for (const item of storage) {
     assert.equal(
@@ -130,8 +130,8 @@ const initializeContract = async (poa, reg) => {
 }
 
 const checkPostSetupStorage = async (poa, reg) => {
-  // get stroage on proxy
-  const tokenStorage = await getAllSimpleStorage(poa.address)
+  // get sequential storage on proxy
+  const tokenStorage = await getAllSequentialStorage(poa.address)
 
   // check PoaToken storage
   const unusedBalances = tokenStorage[0].data
@@ -290,13 +290,13 @@ const enterActiveStage = async (poa, fmr) => {
 }
 
 /*
-assumes that:
-enterActiveStage() has been run to give buy all tokens as whitelistedPoaBuyers[0]
-testApprove() has been run to give whitelistedPoaBuyers[1] approval to spend whitelistedPoaBuyers[0]'s tokens
+  assumes that:
+  - enterActiveStage() has been run to give buy all tokens as whitelistedPoaBuyers[0]
+  - testApprove() has been run to give whitelistedPoaBuyers[1] approval to spend whitelistedPoaBuyers[0]'s tokens
 */
 const checkPostActiveStorage = async (poa, reg) => {
-  // get stroage on proxy
-  const tokenStorage = await getAllSimpleStorage(poa.address)
+  // get sequential storage on proxy
+  const tokenStorage = await getAllSequentialStorage(poa.address)
 
   // check PoaToken storage
   const unusedBalances = tokenStorage[0].data
@@ -469,8 +469,8 @@ const checkPostActiveStorage = async (poa, reg) => {
 }
 
 const checkPostIsUpgradedStorage = async (poa, reg) => {
-  // get stroage on proxy
-  const tokenStorage = await getAllSimpleStorage(poa.address)
+  // get sequential storage on proxy
+  const tokenStorage = await getAllSequentialStorage(poa.address)
   // check PoaToken storage
   const unusedBalances = tokenStorage[0].data
   const unusedTotalSupply = tokenStorage[1].data

@@ -1,9 +1,9 @@
 const BigNumber = require('bignumber.js')
 
-const getAllSimpleStorage = async addr => {
+const getAllSequentialStorage = async addr => {
   let slot = 0
   let zeroCounter = 0
-  const simpleStorage = []
+  const sequentialStorage = []
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const data = await web3.eth.getStorageAt(addr, slot)
@@ -11,7 +11,7 @@ const getAllSimpleStorage = async addr => {
       zeroCounter++
     }
 
-    simpleStorage.push({
+    sequentialStorage.push({
       slot,
       data
     })
@@ -22,7 +22,7 @@ const getAllSimpleStorage = async addr => {
     }
   }
 
-  return simpleStorage
+  return sequentialStorage
 }
 
 const findMappingStorage = async (address, key, startSlot, endSlot) => {
@@ -148,7 +148,7 @@ const bytes32StorageToAscii = hex => {
 }
 
 module.exports = {
-  getAllSimpleStorage,
+  getAllSequentialStorage,
   findMappingStorage,
   getMappingSlot,
   getMappingStorage,

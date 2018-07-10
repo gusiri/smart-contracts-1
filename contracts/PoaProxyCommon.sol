@@ -2,11 +2,11 @@ pragma solidity 0.4.23;
 
 
 /*
-PoaProxyCommon acts as a "contract" between: 
-  * PoaCommon (indirectly PoaToken & PoaCrowdsale)
-  * PoaProxy
+  PoaProxyCommon acts as a "contract" between:
+  - PoaCommon (indirectly PoaToken & PoaCrowdsale)
+  - PoaProxy
 
-this "contract" dictates where to read and write specific non sequential storage
+  This "contract" dictates where to read and write specific non sequential storage
 */
 contract PoaProxyCommon {
   //
@@ -14,12 +14,10 @@ contract PoaProxyCommon {
   //
 
   /*
-  These are commonly agreed upon storage slots
-  which other contracts can use in order to operate on the
-  same storage slots.
+    These are commonly agreed upon storage slots
+    which other contracts can use in order to get & set.
 
-  Constants do not use storage so they do not override 
-  storage themselves.
+    Constants do not use storage so they can be safely shared.
   */
   // TYPE: ADDRESS
   bytes32 public constant poaTokenMasterSlot = keccak256("PoaTokenMaster");
@@ -37,11 +35,11 @@ contract PoaProxyCommon {
   //
 
   /*
-  Each function in this section without "set" prefix is a getter for a specific 
-  non-sequential storage  slot which can be called by either a user or the contract. 
-  Functions with "set" are internal and can only be called by the contract/inherited contracts.
+    Each function in this section without "set" prefix is a getter for a specific
+    non-sequential storage  slot which can be called by either a user or the contract.
+    Functions with "set" are internal and can only be called by the contract/inherited contracts.
 
-  Both getters and setters work on commonly agreed up storage slots in order to avoid collisions.
+    Both getters and setters work on commonly agreed up storage slots in order to avoid collisions.
   */
 
   // contract address of poaTokenMaster, used for delegatecalls

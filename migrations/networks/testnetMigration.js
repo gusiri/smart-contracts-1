@@ -18,7 +18,7 @@ const testnetMigration = async (deployer, accounts, contracts) => {
     contracts: instances,
     gasCost: deployContractsGasCost
   } = await deployContracts(deployer, accounts, contracts, {
-    useExpStub: false //we use real Exchange rate provider here
+    useExpStub: false // we are using a real Exchange Rate Provider here
   })
 
   const { gasCost: addToRegistryGasCost } = await addContractsToRegistry({
