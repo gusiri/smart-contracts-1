@@ -304,7 +304,7 @@ interface IPoaTokenCrowdsale {
     view
     returns (address _contractAddress);
 
-  function checkIsWhitelisted
+  function isWhitelisted
   (
     address _address
   )

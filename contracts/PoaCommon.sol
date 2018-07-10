@@ -133,7 +133,7 @@ contract PoaCommon is PoaProxyCommon {
   //
 
   //
-  // start common lifecycle functinos
+  // start common lifecycle functions
   //
 
   function enterStage(Stages _stage)
@@ -187,7 +187,7 @@ contract PoaCommon is PoaProxyCommon {
   }
 
   // used to check if whitelisted at Whitelist contract
-  function checkIsWhitelisted
+  function isWhitelisted
   (
     address _address
   )

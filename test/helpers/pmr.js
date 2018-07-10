@@ -21,7 +21,8 @@ const {
   testBuyRemainingTokens,
   testActivate,
   defaultIpfsHashArray32,
-  stages
+  stages,
+  whitelistedPoaBuyers
 } = require('./poa')
 
 const { gasPrice } = require('./general')
@@ -84,8 +85,7 @@ const moveTokenToActive = async (poa, fmr) => {
 
   await testStartSale(poa)
   await testBuyRemainingTokens(poa, {
-    // must be accounts 4 - 7 to work with poa test helpers
-    from: accounts[7],
+    from: whitelistedPoaBuyers[whitelistedPoaBuyers.length - 1],
     gasPrice
   })
 

@@ -83,7 +83,7 @@ contract PoaCrowdsale is PoaCommon {
 
   // ensure that a buyer is whitelisted before buying
   modifier isBuyWhitelisted() {
-    require(checkIsWhitelisted(msg.sender));
+    require(isWhitelisted(msg.sender));
     _;
   }
 

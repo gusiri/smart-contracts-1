@@ -77,7 +77,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     address _address
   ) {
     if (whitelistTransfers) {
-      require(checkIsWhitelisted(_address));
+      require(isWhitelisted(_address));
     }
 
     _;
