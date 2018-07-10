@@ -30,7 +30,7 @@ const {
   getAllSequentialStorage,
   bytes32StorageToAscii,
   getNestedMappingStorage,
-  trimBytes
+  trimRightBytes
 } = require('./storage')
 
 const checkPreSetupStorage = async poa => {
@@ -61,8 +61,10 @@ const getCommonStorage = async poa => ({
   stage: new BigNumber(await getNonSequentialStorage(poa, 'stage')),
   custodian: await getNonSequentialStorage(poa, 'custodian'),
   proofOfCustody32: [
-    trimBytes(await getNonSequentialStorage(poa, 'proofOfCustody32')),
-    trimBytes(await getNonSequentialOffsetStorage(poa, 'proofOfCustody32', 1))
+    trimRightBytes(await getNonSequentialStorage(poa, 'proofOfCustody32')),
+    trimRightBytes(
+      await getNonSequentialOffsetStorage(poa, 'proofOfCustody32', 1)
+    )
   ],
   totalSupply: new BigNumber(await getNonSequentialStorage(poa, 'totalSupply')),
   fundedAmountInTokensDuringFiatFunding: new BigNumber(

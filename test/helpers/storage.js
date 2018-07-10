@@ -129,20 +129,44 @@ const findNestedMappingStorage = async (
 const shortHexStringStorageToAscii = hex =>
   web3.toAscii(hex.slice(0, parseInt('0x' + hex[hex.length - 1], 16) + 2))
 
-const trimBytes = hex => {
+const hasZeroBytesAfter = (bytesBuffer, offset) => {
+  let hasZeroBytes = true
+
+  if (offset === bytesBuffer.length) return false
+
+  let index = 0
+  for (const byte of bytesBuffer.values()) {
+    if (index > offset) {
+      hasZeroBytes = hasZeroBytes && byte === 0
+    }
+
+    index++
+  }
+
+  return hasZeroBytes
+}
+
+const trimRightBytes = hex => {
   const bytesBuffer = Buffer.from(hex.replace('0x', ''), 'hex')
   const bytesArray = []
+  let counter = 0
+
   for (const byte of bytesBuffer.values()) {
-    if (byte != 0) {
+    if (
+      byte !== 0 ||
+      (byte === 0 && !hasZeroBytesAfter(bytesBuffer, counter))
+    ) {
       bytesArray.push(byte)
     }
+
+    counter++
   }
 
   return '0x' + Buffer.from(bytesArray, 'hex').toString('hex')
 }
 
 const bytes32StorageToAscii = hex => {
-  const trimmedBytes = trimBytes(hex)
+  const trimmedBytes = trimRightBytes(hex)
   // because solidity also uses ascii NOT utf8
   return Buffer.from(trimmedBytes.replace('0x', ''), 'hex').toString('ascii')
 }
@@ -156,5 +180,5 @@ module.exports = {
   findNestedMappingStorage,
   shortHexStringStorageToAscii,
   bytes32StorageToAscii,
-  trimBytes
+  trimRightBytes
 }
