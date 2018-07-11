@@ -51,8 +51,8 @@ module.exports = {
       host: 'localhost',
       port: 8545,
       network_id: 4,
-      gas: 7694264,
-      gasPrice: 1e9
+      gas: 4.7e6,
+      gasPrice: 1e10
     },
     // to be used when we want to interact in a local truffle console session
     hdwallet: {

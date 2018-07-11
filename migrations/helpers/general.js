@@ -7,6 +7,7 @@ const setWeb3 = _web3 => (web3 = _web3)
 
 // given an offset in second, returns seconds since unix epoch
 const unixTimeWithOffset = offset => Math.floor(Date.now() / 1000) + offset
+const gasAmountForPoa = 6612388
 
 const deployContracts = async (
   deployer,
@@ -24,7 +25,7 @@ const deployContracts = async (
     CentralLogger,
     PoaManager,
     PoaTokenMaster,
-    PoaCrowdsale,
+    PoaCrowdsaleMaster,
     Whitelist,
     ExchangeRateProvider,
     ExchangeRateProviderStub
@@ -119,12 +120,14 @@ const deployContracts = async (
 
   console.log(chalk.yellow('deploying PoaTokenMaster...'))
   // PoaToken master
-  const poaTokenMaster = await deployer.deploy(PoaTokenMaster)
+  const poaTokenMaster = await deployer.deploy(PoaTokenMaster, {
+    gas: gasAmountForPoa
+  })
   console.log(chalk.cyan('deployment successful!'))
 
   console.log(chalk.yellow('deploying PoaCrowdsale Master...'))
   // PoaCrowdsale master
-  const poaCrowdsaleMaster = await deployer.deploy(PoaCrowdsale)
+  const poaCrowdsaleMaster = await deployer.deploy(PoaCrowdsaleMaster)
   console.log(chalk.cyan('deployment successful!'))
 
   console.log(chalk.yellow('deploying CentralLogger...'))
@@ -137,7 +140,6 @@ const deployContracts = async (
 
   const ownerPostEtherBalance = await getEtherBalance(owner)
 
-  console.log('ownerPostEtherBalance', ownerPostEtherBalance)
   const gasCost = ownerPreEtherBalance.sub(ownerPostEtherBalance)
 
   return {
@@ -179,36 +181,44 @@ const addContractsToRegistry = async config => {
   const { owner } = config
   const ownerPreEtherBalance = await getEtherBalance(owner)
 
+  console.log('Registering BricblockToken')
   await reg.updateContractAddress('BrickblockToken', bbk.address, {
     from: owner
   })
+  console.log('Succesful!')
+  console.log('Registering AccessToken')
   await reg.updateContractAddress('AccessToken', act.address, {
     from: owner
   })
+  console.log('Registering ExchangeRates')
   await reg.updateContractAddress('ExchangeRates', exr.address, {
     from: owner
   })
+  console.log('Registering ExchangeRateProvider')
   await reg.updateContractAddress('ExchangeRateProvider', exp.address, {
     from: owner
   })
+  console.log('Registering AccessToken')
   await reg.updateContractAddress('FeeManager', fmr.address, {
     from: owner
   })
+  console.log('Registering AccessToken')
   await reg.updateContractAddress('BrickblockAccount', bat.address, {
     from: owner
   })
+  console.log('Registering AccessToken')
   await reg.updateContractAddress('Whitelist', wht.address, {
     from: owner
   })
+  console.log('Registering AccessToken')
   await reg.updateContractAddress('PoaManager', pmr.address, {
     from: owner
   })
+  console.log('Registering AccessToken')
   await reg.updateContractAddress('PoaTokenMaster', poaTokenMaster.address, {
     from: owner
   })
-  await reg.updateContractAddress('PoaTokenMaster', poaTokenMaster.address, {
-    from: owner
-  })
+  console.log('Registering AccessToken')
   await reg.updateContractAddress(
     'PoaCrowdsaleMaster',
     poaCrowdsaleMaster.address,

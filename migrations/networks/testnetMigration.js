@@ -9,7 +9,7 @@ const {
   getEtherBalance
 } = require('../helpers/general')
 
-const testnetMigration = async (deployer, accounts, contracts) => {
+const testnetMigration = async (deployer, accounts, contracts, web3) => {
   const owner = accounts[0]
   const contributors = accounts.slice(2, 5)
   const ownerPreEtherBalance = await getEtherBalance(owner)
