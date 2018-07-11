@@ -124,8 +124,8 @@ Run `yarn truffle migrate --reset --network [network name]`.
 The network name can be `rinkeby` or `kovan`
 
 #### Steps to deploy on Rinkeby
-1. Install `geth` (Mac Os users can run `brew install geth` on terminal)
-1. Create or import 6 accounts for geth. See [Managing Accounts On Geth](https://github.com/ethereum/go-ethereum/wiki/Managing-your-accounts)
+1. Install `geth` (MacOs users can run `brew install geth` on terminal)
+1. Create or import 6 accounts for geth. See [Managing Accounts On Geth](https://github.com/ethereum/go-ethereum/wiki/Managing-your-accounts) for details.
 1. Create a password file where each line is an account password in the same order as the created accounts.
 2. 1. Run `geth` with the following arguments
     ```
