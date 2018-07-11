@@ -7,7 +7,9 @@
 
 module.exports = {
   // mainnet
-  '1': {},
+  '1': {
+    BrickblockToken: '0x4a6058666cf1057eac3cd3a5a614620547559fc9'
+  },
 
   // rinkeby
   '4': {
@@ -21,7 +23,7 @@ module.exports = {
     ExchangeRateProvider: '0x6f6addd773758f1db6d3771d052085ed71a1ce76',
     PoaManager: '0x219303e1fd7c7d89f122fb1cd30d3ab9e5dca6ac',
     PoaTokenMaster: '0xfc34822730abe7b6170ec1b129e71ae2a533a324',
-    PoaCrowdsale: '0xed514da634bb61047c260052b1788343fa9aa62f',
+    PoaCrowdsaleMaster: '0xed514da634bb61047c260052b1788343fa9aa62f',
     CentralLogger: '0xdfb4e846c34dd184ff5ae89c441db8283abfd07d',
     CustomPOAToken: ['0xcbf23082233ebf2b97a986b4d05669472d744e3c']
   },

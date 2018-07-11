@@ -194,31 +194,38 @@ const addContractsToRegistry = async config => {
   await reg.updateContractAddress('ExchangeRates', exr.address, {
     from: owner
   })
+  console.log('Succesful!')
   console.log('Registering ExchangeRateProvider')
   await reg.updateContractAddress('ExchangeRateProvider', exp.address, {
     from: owner
   })
-  console.log('Registering AccessToken')
+  console.log('Succesful!')
+  console.log('Registering FeeManager')
   await reg.updateContractAddress('FeeManager', fmr.address, {
     from: owner
   })
-  console.log('Registering AccessToken')
+  console.log('Succesful!')
+  console.log('Registering BrickblockAccount')
   await reg.updateContractAddress('BrickblockAccount', bat.address, {
     from: owner
   })
-  console.log('Registering AccessToken')
+  console.log('Succesful!')
+  console.log('Registering Whitelist')
   await reg.updateContractAddress('Whitelist', wht.address, {
     from: owner
   })
-  console.log('Registering AccessToken')
+  console.log('Succesful!')
+  console.log('Registering PoaManager')
   await reg.updateContractAddress('PoaManager', pmr.address, {
     from: owner
   })
-  console.log('Registering AccessToken')
+  console.log('Succesful!')
+  console.log('Registering PoaTokenMaster')
   await reg.updateContractAddress('PoaTokenMaster', poaTokenMaster.address, {
     from: owner
   })
-  console.log('Registering AccessToken')
+  console.log('Succesful!')
+  console.log('Registering PoaCrowdsaleMaster')
   await reg.updateContractAddress(
     'PoaCrowdsaleMaster',
     poaCrowdsaleMaster.address,
@@ -226,9 +233,12 @@ const addContractsToRegistry = async config => {
       from: owner
     }
   )
+  console.log('Succesful!')
+  console.log('Registering PoaCrowdsaleMaster')
   await reg.updateContractAddress('Logger', log.address, {
     from: owner
   })
+  console.log('Succesful!')
   const ownerPostEtherBalance = await getEtherBalance(owner)
 
   const gasCost = ownerPreEtherBalance.sub(ownerPostEtherBalance)
