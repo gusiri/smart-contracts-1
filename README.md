@@ -123,6 +123,20 @@ Deploying with truffle will execute the [migrations/2_deploy_contracts.js](https
 Run `yarn truffle migrate --reset --network [network name]`.
 The network name can be `rinkeby` or `kovan`
 
+#### Steps to deploy on Rinkeby
+1. install `geth` (Mac Os users can run `brew install geth` on terminal)
+1. create or import 6 accounts for geth. See [Managing Accounts On Geth](https://github.com/ethereum/go-ethereum/wiki/Managing-your-accounts)
+1. create a password file containing accoount's password per each row with the same order for created accounts.
+1. run geth with the following arguments
+    ```
+    geth --rinkeby --rpc --unlock "0,1,2,3,4,5,6" --password "path to password file"
+    ```
+1. Wait for geth node to synchronize blocks.
+1. On another terminal window, go to project folder and run
+    ```
+    yarn truffle migrate --network rinkeby
+    ```
+
 ### Mainnet
 Mainnet deployment is done through offline signing of transactions. See our [cold-store](https://git.brickblock-dev.io/core/cold-store) repo for the process.
 
