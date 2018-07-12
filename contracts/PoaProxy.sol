@@ -11,9 +11,22 @@ import "./PoaProxyCommon.sol";
   - PoaToken
   - PoaCrowdsale
 
-  It uses chained "delegatecall()"s to call functions on
-  PoaToken and PoaCrowdsale and sets the resulting storage
+  @dev For all Poa related contracts, there are two common terms which
+  need explanation:
+  - sequential storage
+    - contract storage that is stored sequentially in order of declaration
+    - this is the normal way storage works with smart contracts
+  - non-sequential storage
+    - contract storage that is stored in a slot non sequentially
+    - storage slot is determined by taking a hash of variable's name
+    and using that hash as the storage location
+    - this pattern is used in order to ensure storage from multiple
+    proxied master contracts does not collide
+
+  @dev PoaProxy uses chained "delegatecall()"s to call functions on
+  PoaToken and PoaCrowdsale and set the resulting storage
   here on PoaProxy.
+
   @notice getContractAddress("Logger").call() does not use the return value
   because we would rather contract functions to continue even if the event
   did not successfully trigger on the logger contract.
