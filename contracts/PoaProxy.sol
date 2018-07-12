@@ -4,20 +4,20 @@ pragma solidity 0.4.23;
 
 import "./PoaProxyCommon.sol";
 
+
 /**
-  @title This contract manages the storage of:
-  - PoaProxyCommon
+  @title This contract manages the storage (sequential and non-sequential) of:
   - PoaProxy
-  - PoaCommon
-  - PoaCrowdsale
   - PoaToken
+  - PoaCrowdsale
 
   It uses chained "delegatecall()"s to call functions on
-  PoaToken and PoaCrowdsale and set the resulting storage
+  PoaToken and PoaCrowdsale and sets the resulting storage
   here on PoaProxy.
+  @notice getContractAddress("Logger").call() does not use the return value
+  because we would rather contract functions to continue even if the event
+  did not successfully trigger on the logger contract.
 */
-
-
 contract PoaProxy is PoaProxyCommon {
   uint8 public constant version = 1;
 
