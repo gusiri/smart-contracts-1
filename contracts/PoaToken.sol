@@ -262,8 +262,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     /**
       @dev Need to check if there have been no payouts, otherwise safe math
       will throw due to dividing by 0.
-
-      @dev The below variable represents the total payout from the per token rate pattern.
+      The below variable represents the total payout from the per token rate pattern.
       It uses this funky naming pattern in order to differentiate from the unclaimedPayoutTotals
       which means something very different.
     */
@@ -276,10 +275,9 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     /**
       @dev Balances may be bumped into unclaimedPayoutTotals in order to
       maintain balance tracking accross token transfers.
-
-      @dev perToken payout rates are stored * 1e18 in order to be kept accurate
-      perToken payout is / 1e18 at time of usage for actual Ξ balances
-      unclaimedPayoutTotals are stored as actual Ξ value no need for rate * balance
+      Per token payout rates are stored * 1e18 in order to be kept accurate
+      per token payout is / 1e18 at time of usage for actual Ξ balances
+      `unclaimedPayoutTotals` are stored as actual Ξ value no need for rate * balance
     */
     return _includeUnclaimed
       ? _totalPerTokenUnclaimedConverted.add(unclaimedPayoutTotals(_address))
@@ -329,9 +327,9 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     // deduct fee from payout
     uint256 _payoutAmount = msg.value.sub(_fee);
     /**
-      @dev totalPerTokenPayout is a rate at which to payout based on token balance
-      it is stored as * 1e18 in order to keep accuracy
-      it is / 1e18 when used relating to actual Ξ values
+      @dev totalPerTokenPayout is a rate at which to payout based on token balance.
+      It is stored as * 1e18 in order to keep accuracy
+      It is / 1e18 when used relating to actual Ξ values
     */
     totalPerTokenPayout = totalPerTokenPayout
       .add(_payoutAmount

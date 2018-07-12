@@ -16,8 +16,7 @@ contract PoaProxyCommon {
   /**
     @dev These are commonly agreed upon storage slots
     which other contracts can use in order to get & set.
-
-    @dev Constants do not use storage so they can be safely shared.
+    Constants do not use storage so they can be safely shared.
   */
   // TYPE: address
   // Slot for PoaTokenMaster used by proxies
@@ -41,8 +40,7 @@ contract PoaProxyCommon {
     @dev Each function in this section without "set" prefix is a getter for a specific
     non-sequential storage slot which can be called by either a user or the contract.
     Functions with "set" are internal and can only be called by the contract/inherited contracts.
-
-    @dev Both getters and setters work on commonly agreed up storage slots in order to avoid collisions.
+    Both getters and setters work on commonly agreed up storage slots in order to avoid collisions.
   */
 
   function poaTokenMaster()

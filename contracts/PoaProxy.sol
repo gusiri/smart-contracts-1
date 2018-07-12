@@ -22,12 +22,11 @@ import "./PoaProxyCommon.sol";
     and using that hash as the storage location
     - this pattern is used in order to ensure storage from multiple
     proxied master contracts does not collide
-
-  @dev PoaProxy uses chained "delegatecall()"s to call functions on
+  PoaProxy uses chained "delegatecall()"s to call functions on
   PoaToken and PoaCrowdsale and set the resulting storage
   here on PoaProxy.
 
-  @notice getContractAddress("Logger").call() does not use the return value
+  @notice `getContractAddress("Logger").call()` does not use the return value
   because we would rather contract functions to continue even if the event
   did not successfully trigger on the logger contract.
 */
