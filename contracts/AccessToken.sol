@@ -248,8 +248,8 @@ contract AccessToken is PausableToken {
     @notice does the same thing as ERC20 transfer but,
     uses balanceOf rather than balances[adr] (balances is inaccurate see above)
     sets correct values for doubleEntryParadigm (see glossary)
-    @param _to
-    @param _value
+    @param _to Receiver address
+    @param _value Amount
     @return bool
   */
   function transfer(
@@ -272,9 +272,9 @@ contract AccessToken is PausableToken {
     @notice Does the same thing as ERC20 transferFrom but...
     Uses balanceOf rather than balances[adr] (balances is inaccurate see above)
     Sets correct values for doubleEntryParadigm (see glossary)
-    @param _from
-    @param _to
-    @param _value
+    @param _from Sender Address
+    @param _to Receiver address
+    @param _value Amount
     @return bool
   */
   function transferFrom(
@@ -304,8 +304,8 @@ contract AccessToken is PausableToken {
     @notice Callable only by FeeManager contract
     Burns tokens through incrementing spentBalances[adr] and decrements totalSupply
     Works with doubleEntryParadigm (see glossary)
-    @param _address
-    @param _value
+    @param _address Sender Address
+    @param _value Amount
     @return bool
   */
   function burn(
