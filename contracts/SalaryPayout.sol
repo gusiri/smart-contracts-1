@@ -25,7 +25,7 @@ contract SalaryPayout is Ownable {
     token = _token;
   }
 
-  function addEmployee (address _employee, uint256 _startingBalance)
+  function addEmployee (address _employee, uint256 _startingBalance, uint256 _monthlySalary)
     public
     onlyOwner
   {
