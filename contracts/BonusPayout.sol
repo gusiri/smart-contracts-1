@@ -1,4 +1,5 @@
 pragma solidity 0.4.23;
+pragma experimental ABIEncoderV2;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -12,6 +13,9 @@ import "./libs/DateTime.sol";
 contract BonusPayout is Ownable {
   using SafeMath for uint256;
 
+  //Events
+  event DistributeEvent(uint256 timestamp, uint256 amount);
+
   struct EmployeeStruct {
     uint256 startingBalance;
     uint256 quarterlyAmount;
@@ -22,6 +26,7 @@ contract BonusPayout is Ownable {
 
   mapping(address => EmployeeStruct) public employeeList;
   address[] public addressIndexes;
+  uint256 public lastDistributionTime;
 
   ERC20 token;
   DateTime dt;
@@ -93,8 +98,11 @@ contract BonusPayout is Ownable {
 
   function distributePayouts()
     public
-  {
-    require(dt.getMonth(block.timestamp) % 3 == 0);
+  { 
+    // solium-disable-next-line security/no-block-members
+    //require(dt.getMonth(block.timestamp) % 3 == 0);
+    uint256 totalAmount;
+  
     for (uint i = 0; i < addressIndexes.length; i++) {
       address _address = addressIndexes[i];
       uint256 _amount = employeeList[_address].quarterlyAmount;
@@ -103,7 +111,27 @@ contract BonusPayout is Ownable {
         _amount.add(employeeList[_address].startingBalance);
         employeeList[_address].startingBalance = 0;
       }
+      totalAmount = totalAmount.add(_amount);
       payout(_address, _amount);
     }
+
+    // solium-disable-next-line security/no-block-members
+    lastDistributionTime = block.timestamp;
+    emit DistributeEvent(lastDistributionTime, totalAmount);
+  }
+
+  function claim(uint256 _amount)
+    public
+    onlyOwner
+  {
+    token.transfer(owner, _amount);
+  }
+
+  function claimAll()
+    public
+    onlyOwner
+  {
+    uint256 amount = token.balanceOf(address(this));
+    token.transfer(owner, amount);
   }
 }

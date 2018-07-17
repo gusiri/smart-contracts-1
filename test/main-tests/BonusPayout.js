@@ -1,6 +1,11 @@
 const BigNumber = require('bignumber.js')
 //const { testWillThrow } = require('../helpers/general')
-const { testAddEmployee } = require('../helpers/bpo')
+const {
+  testAddEmployee,
+  testAddManyEmployee,
+  testRemoveEmployee,
+  testPayout
+} = require('../helpers/bpo')
 const DateTimeArtifact = artifacts.require('./libs/DateTime')
 const BonusPayoutArtifact = artifacts.require('BonusPayout')
 const { finalizedBBK } = require('../helpers/bbk')
@@ -24,10 +29,22 @@ describe('when distributing BBK bonus payouts', () => {
         new BigNumber(1e24)
       )
       bpo = await BonusPayoutArtifact.new(bbk.address, dt.address)
+      await bbk.transfer(bpo.address, new BigNumber('1e24'), {
+        from: bbkHolder
+      })
     })
 
     it('should add employee', async () => {
-      await testAddEmployee(bbk, bpo, employees[0], 10000, 3245)
+      await testAddEmployee(bpo, employees[0], 10000, 3245)
+    })
+
+    it('should remove employee', async () => {
+      await testRemoveEmployee(bbk, bpo, employees[0], 245254)
+    })
+
+    it('should distribute bbk', async () => {
+      await testAddManyEmployee(bpo, employees, new BigNumber(1000), 0)
+      await testPayout(bbk, bpo)
     })
   })
 })
