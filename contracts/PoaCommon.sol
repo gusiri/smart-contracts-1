@@ -36,7 +36,7 @@ contract PoaCommon is PoaProxyCommon {
   }
 
   /***********************************************
-  * Start common non-sequential storage pointers *
+  * Start Common Non-Sequential Storage Pointers *
   ***********************************************/
 
   /*
@@ -73,8 +73,8 @@ contract PoaCommon is PoaProxyCommon {
 
   // Tracks the total amount of ETH raised during the EthFunding stage.
   // NOTE: We can't use `address(this).balance` because after activating the
-  // POA contract, its balance will be transferred to the custodian and can
-  // no longer be used to calculate balances.
+  // POA contract, its balance will become `claimable` by the broker and can
+  // therefore no longer be used to calculate balances.
   // TYPE: uint256
   bytes32 internal constant fundedAmountInWeiSlot = keccak256("fundedAmountInWei");
 
@@ -183,7 +183,7 @@ contract PoaCommon is PoaProxyCommon {
   *********************************/
 
   /// @notice Utility function calculating the necessary fee for a given amount
-  /// @return Payable fee
+  /// @return uint256 Payable fee
   function calculateFee(uint256 _value)
     public
     pure
@@ -273,8 +273,8 @@ contract PoaCommon is PoaProxyCommon {
 
     // Loop through each byte in bytes32
     for (uint _bytesCounter = 0; _bytesCounter < 32; _bytesCounter++) {
-      /**
-        @dev Convert bytes32 data to uint256 in order to increase the number enough to
+      /*
+        Convert bytes32 data to uint256 in order to increase the number enough to
         shift bytes further left while pushing out leftmost bytes.
         Then convert uint256 data back to bytes32.
         Then convert bytes32 data to bytes1 where everything but the leftmost hex value (byte)
