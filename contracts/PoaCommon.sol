@@ -20,6 +20,7 @@ contract PoaCommon is PoaProxyCommon {
   // The fee paid to the BBK network per crowdsale investment and per payout
   // NOTE: Tracked in permille (and NOT percent) to reduce dust and
   // inaccuracies caused by integer division
+  uint256 public constant feeRateInPermille = 5; // read: 0.5%
 
   // An enum representing all stages a contract can be in.
   // Different stages enable or restrict certain functionality.
@@ -188,8 +189,7 @@ contract PoaCommon is PoaProxyCommon {
     pure
     returns (uint256)
   {
-    // divide by 1000 because feeRate permille
-    return feeRate.mul(_value).div(1000);
+    return feeRateInPermille.mul(_value).div(1000);
   }
 
   /// @notice Pay fee to FeeManager contract
@@ -228,32 +228,31 @@ contract PoaCommon is PoaProxyCommon {
     view
     returns (bool _isWhitelisted)
   {
-    bytes4 _sig = bytes4(keccak256("whitelisted(address)"));
+    bytes4 _signature = bytes4(keccak256("whitelisted(address)"));
     address _whitelistContract = getContractAddress("Whitelist");
-    address _arg = _address;
 
     assembly {
-      let _call := mload(0x40) // set _call to free memory pointer
-      mstore(_call, _sig) // store _sig at _call pointer
-      mstore(add(_call, 0x04), _arg) // store _arg at _call offset by 4 bytes for pre-existing _sig
+      let _pointer := mload(0x40)  // Set _pointer to free memory pointer
+      mstore(_pointer, _signature) // Store _signature at _pointer
+      mstore(add(_pointer, 0x04), _address) // Store _address at _pointer. Offset by 4 bytes for previously stored _signature
 
-      // staticcall(g, a, in, insize, out, outsize) => 0 on error 1 on success
+      // staticcall(g, a, in, insize, out, outsize) => returns 0 on error, 1 on success
       let result := staticcall(
-        gas,    // g = gas: whatever was passed already
-        _whitelistContract,  // a = address: _whitelist address assigned from getContractAddress()
-        _call,  // in = mem in  mem[in..(in+insize): set to _call pointer
-        0x24,   // insize = mem insize  mem[in..(in+insize): size of sig (bytes4) + bytes32 = 0x24
-        _call,   // out = mem out  mem[out..(out+outsize): output assigned to this storage address
-        0x20    // outsize = mem outsize  mem[out..(out+outsize): output should be 32byte slot (bool size = 0x01 < slot size 0x20)
+        gas,                // g = gas: whatever was passed already
+        _whitelistContract, // a = address: _whitelist address assigned from getContractAddress()
+        _pointer,           // in = mem in  mem[in..(in+insize): set to _pointer pointer
+        0x24,               // insize = mem insize  mem[in..(in+insize): size of sig (bytes4) + bytes32 = 0x24
+        _pointer,           // out = mem out  mem[out..(out+outsize): output assigned to this storage address
+        0x20                // outsize = mem outsize  mem[out..(out+outsize): output should be 32byte slot (bool size = 0x01 < slot size 0x20)
       )
 
-      // revert if not successful
+      // Revert if not successful
       if iszero(result) {
         revert(0, 0)
       }
 
-      _isWhitelisted := mload(_call) // assign result to returned value
-      mstore(0x40, add(_call, 0x24)) // advance free memory pointer by largest _call size
+      _isWhitelisted := mload(_pointer) // assign result to returned value
+      mstore(0x40, add(_pointer, 0x24)) // advance free memory pointer by largest _pointer size
     }
   }
 
