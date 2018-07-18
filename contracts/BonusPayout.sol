@@ -14,7 +14,7 @@ contract BonusPayout is Ownable {
   //Events
   event DistributeEvent(uint256 timestamp, uint256 amount);
   event AddEmployeeEvent(address _address, uint256 timestamp);
-  event RemoveEmployeeEven(address _address, uint256 timestamp);
+  event RemoveEmployeeEvent(address _address, uint256 timestamp);
   event ChangeQuarterlyAmountEvent(address _address, uint256 timestamp, uint256 newAmount);
 
   struct EmployeeStruct {
@@ -55,12 +55,16 @@ contract BonusPayout is Ownable {
 
     employee.isActive = true;
 
+    // solium-disable-next-line security/no-block-members
+    emit AddEmployeeEvent(_beneficiary, block.timestamp);
+
     return true;
   }
 
   function removeEmployee (address _beneficiary, uint256 _endingBalance)
     public
     onlyOwner
+    returns(bool)
   {
     EmployeeStruct memory deletedUser = employeeList[_beneficiary];
     require(deletedUser.isActive == true);
@@ -68,22 +72,31 @@ contract BonusPayout is Ownable {
     require(payout(_beneficiary, _endingBalance));
 
     // if index is not the last entry
+    // swap deleted user index with the last one
     if (deletedUser.index != addressIndexes.length-1) {
-      // delete addressIndexes[deletedUser.index];
-      // last EmployeeStruct
       address lastAddress = addressIndexes[addressIndexes.length-1];
       addressIndexes[deletedUser.index] = lastAddress;
       employeeList[lastAddress].index = deletedUser.index; 
     }
     delete employeeList[_beneficiary];
     addressIndexes.length--;
+    // solium-disable-next-line security/no-block-members
+    emit RemoveEmployeeEvent(_beneficiary, block.timestamp);
+
+    return true;
   }
 
   function updateQuarterlyAmount(address _beneficiary, uint256 newAmount)
     public
     onlyOwner
+    returns(bool)
   {
     employeeList[_beneficiary].quarterlyAmount = newAmount;
+
+    // solium-disable-next-line security/no-block-members
+    emit ChangeQuarterlyAmountEvent(_beneficiary, block.timestamp, newAmount);
+
+    return true;
   }
 
   function payout(address _beneficiary, uint256 _bbkAmount)
