@@ -1,13 +1,14 @@
 const BigNumber = require('bignumber.js')
-//const { testWillThrow } = require('../helpers/general')
+const { gasPrice } = require('../helpers/general')
 const {
   testAddEmployee,
   testAddManyEmployee,
   testRemoveEmployee,
   testPayout
 } = require('../helpers/bpo')
-const DateTimeArtifact = artifacts.require('./libs/DateTime')
+
 const BonusPayoutArtifact = artifacts.require('BonusPayout')
+const DummyContractArtifact = artifacts.require('./stubs/RemoteContractStub')
 const { finalizedBBK } = require('../helpers/bbk')
 
 describe('when distributing BBK bonus payouts', () => {
@@ -15,36 +16,69 @@ describe('when distributing BBK bonus payouts', () => {
     const owner = accounts[0]
     const bbkHolder = accounts[1]
     const employees = accounts.slice(2)
-    let dt
+    const defaultBbkSalaryAmount = 1000
+    const defaultStartingBalance = 3234
+    const defaultEndingBalance = 34552
     let bpo
     let bbk
 
-    before('setup contracts', async () => {
-      dt = await DateTimeArtifact.new()
+    beforeEach('setup contracts', async () => {
+      const dummy = await DummyContractArtifact.new(1000, { from: owner })
+
       bbk = await finalizedBBK(
         owner,
         bbkHolder,
-        dt.address,
+        dummy.address,
         [bbkHolder],
         new BigNumber(1e24)
       )
-      bpo = await BonusPayoutArtifact.new(bbk.address, dt.address)
+      bpo = await BonusPayoutArtifact.new(bbk.address)
       await bbk.transfer(bpo.address, new BigNumber('1e24'), {
         from: bbkHolder
       })
     })
 
     it('should add employee', async () => {
-      await testAddEmployee(bpo, employees[0], 10000, 3245)
+      await testAddEmployee(
+        bpo,
+        employees[0],
+        defaultBbkSalaryAmount,
+        defaultStartingBalance,
+        {
+          from: owner
+        }
+      )
     })
 
     it('should remove employee', async () => {
-      await testRemoveEmployee(bbk, bpo, employees[0], 245254)
+      await testAddEmployee(
+        bpo,
+        employees[0],
+        defaultBbkSalaryAmount,
+        defaultStartingBalance,
+        {
+          from: owner
+        }
+      )
+      await testRemoveEmployee(bbk, bpo, employees[0], defaultEndingBalance, {
+        from: owner
+      })
     })
 
-    it('should distribute bbk', async () => {
-      await testAddManyEmployee(bpo, employees, new BigNumber(1000), 0)
-      await testPayout(bbk, bpo)
+    it('should distribute bbk to all registered employees', async () => {
+      await testAddManyEmployee(
+        bpo,
+        employees,
+        new BigNumber(defaultBbkSalaryAmount),
+        defaultStartingBalance,
+        {
+          from: owner
+        }
+      )
+      await testPayout(bbk, bpo, employees, {
+        from: owner,
+        gasPrice
+      })
     })
   })
 })

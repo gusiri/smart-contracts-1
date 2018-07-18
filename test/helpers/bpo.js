@@ -1,15 +1,18 @@
+/* eslint-disable no-console */
+
 // BonusPayout Helper
 
-//const BigNumber = require('bignumber.js')
-const { waitForEvent, gasPrice } = require('./general')
+const BigNumber = require('bignumber.js')
+const { waitForEvent, getReceipt } = require('./general')
 
 const testAddEmployee = async (
   bpo,
   employee,
   quarterlyAmount,
-  startingBalance = 0
+  startingBalance,
+  config
 ) => {
-  await bpo.addEmployee(employee, quarterlyAmount, startingBalance)
+  await bpo.addEmployee(employee, quarterlyAmount, startingBalance, config)
   const [
     employeeStartingBalance,
     employeeQuarterlyAmount,
@@ -32,8 +35,8 @@ const testAddEmployee = async (
   assert.equal(isActive.toString(), 'true', 'Employee is not set to active')
 
   return {
-    employeeStartingBalance,
-    employeeQuarterlyAmount,
+    startingBalance,
+    quarterlyAmount,
     index,
     isActive
   }
@@ -43,24 +46,33 @@ const testAddManyEmployee = async (
   bpo,
   employees,
   quarterlyAmount,
-  startingBalance = 0
+  startingBalance,
+  config
 ) => {
   for (let index = 0; index < employees.length; index++) {
     const employee = employees[index]
-    await testAddEmployee(bpo, employee, quarterlyAmount, startingBalance)
+    await testAddEmployee(
+      bpo,
+      employee,
+      quarterlyAmount,
+      startingBalance,
+      config
+    )
   }
 }
 
-const testRemoveEmployee = async (bbk, bpo, employee, endingBalance = 0) => {
+const testRemoveEmployee = async (
+  bbk,
+  bpo,
+  employee,
+  endingBalance,
+  config
+) => {
   const preBonusContractBbkBalance = await bbk.balanceOf(bpo.address)
   const preEmployeeBbkBalance = await bbk.balanceOf(employee)
-  await bpo.removeEmployee(employee, endingBalance)
-  const [
-    employeeStartingBalance,
-    employeeQuarterlyAmount,
-    index,
-    isActive
-  ] = await bpo.employeeList(employee)
+  await bpo.removeEmployee(employee, endingBalance, config)
+
+  const employeeData = await getEmployeeData(bpo, employee)
   const postBonusContractBbkBalance = await bbk.balanceOf(bpo.address)
   const postEmployeeBbkBalance = await bbk.balanceOf(employee)
 
@@ -82,17 +94,92 @@ const testRemoveEmployee = async (bbk, bpo, employee, endingBalance = 0) => {
     'Employee balance does not match with the expected.'
   )
 
-  assert.equal(isActive.toString(), 'false', 'Employee is not set to false')
+  assert.equal(
+    employeeData.isActive.toString(),
+    'false',
+    'Employee is not set to false'
+  )
 }
 
-const testPayout = async (bbk, bpo) => {
+const testPayout = async (bbk, bpo, employees, config) => {
   const preBonusContractBbkBalance = await bbk.balanceOf(bpo.address)
-  const tx = await bpo.distributePayouts()
-  const postBonusContractBbkBalance = await bbk.balanceOf(bpo.address)
-  console.log(JSON.stringify(tx, null, 4))
-  const { args: distributeEvent } = await waitForEvent(bpo.DistributeEvent())
-  // const expectedBonusContractBalance = preBonusContractBbkBalance.minus()
+  let expectedTotalDistroAmount = new BigNumber(0)
 
+  //collect employee data before payout
+  const preEmployeeObject = []
+
+  for (let index = 0; index < employees.length; index++) {
+    const employeeAddress = employees[index]
+    const employeeData = await getEmployeeData(bpo, employeeAddress)
+    employeeData.balance = await bbk.balanceOf(employeeAddress)
+    employeeData.expectedBalanceAfterPayout = employeeData.balance
+      .plus(employeeData.startingBalance)
+      .plus(employeeData.quarterlyAmount)
+
+    expectedTotalDistroAmount = expectedTotalDistroAmount.plus(
+      employeeData.expectedBalanceAfterPayout
+    )
+    preEmployeeObject.push(employeeData)
+  }
+
+  const txHash = await bpo.distributePayouts(config)
+  const tx = await getReceipt(txHash)
+
+  //collect employee data after payout
+  const postEmployeeObject = []
+  for (let index = 0; index < employees.length; index++) {
+    const employeeAddress = employees[index]
+    const employeeData = await getEmployeeData(bpo, employeeAddress)
+    employeeData.balance = await bbk.balanceOf(employeeAddress)
+    postEmployeeObject.push(employeeData)
+  }
+
+  const postBonusContractBbkBalance = await bbk.balanceOf(bpo.address)
+  const { args: distributeEvent } = await waitForEvent(bpo.DistributeEvent())
+  const expectedBonusContractBalance = preBonusContractBbkBalance.minus(
+    expectedTotalDistroAmount
+  )
+
+  for (let index = 0; index < employees.length; index++) {
+    const currentPreEmployeeObject = preEmployeeObject[index]
+    const currentPostEmployeeObject = postEmployeeObject[index]
+
+    assert.equal(
+      currentPostEmployeeObject.balance.toString(),
+      currentPreEmployeeObject.expectedBalanceAfterPayout.toString(),
+      'Expected balance does not match for user after payout'
+    )
+  }
+
+  assert.equal(
+    postBonusContractBbkBalance.toString(),
+    expectedBonusContractBalance.toString(),
+    'Bonus contract balance does not match with the expected'
+  )
+
+  assert.equal(
+    distributeEvent.amount.toString(),
+    expectedTotalDistroAmount.toString(),
+    'Total distributed payout amount should match the expected'
+  )
+
+  console.log(`Used gas amount for ${employees.length} accounts`, tx.gasUsed)
+}
+
+const getEmployeeData = async (bpo, employeeAddress) => {
+  const [
+    startingBalance,
+    quarterlyAmount,
+    index,
+    isActive
+  ] = await bpo.employeeList(employeeAddress)
+
+  return {
+    startingBalance,
+    quarterlyAmount,
+    index,
+    isActive
+  }
 }
 
 module.exports = {

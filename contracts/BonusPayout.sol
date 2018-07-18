@@ -1,10 +1,8 @@
 pragma solidity 0.4.23;
-pragma experimental ABIEncoderV2;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "./libs/DateTime.sol";
 
 
 /**
@@ -15,6 +13,9 @@ contract BonusPayout is Ownable {
 
   //Events
   event DistributeEvent(uint256 timestamp, uint256 amount);
+  event AddEmployeeEvent(address _address, uint256 timestamp);
+  event RemoveEmployeeEven(address _address, uint256 timestamp);
+  event ChangeQuarterlyAmountEvent(address _address, uint256 timestamp, uint256 newAmount);
 
   struct EmployeeStruct {
     uint256 startingBalance;
@@ -26,19 +27,15 @@ contract BonusPayout is Ownable {
 
   mapping(address => EmployeeStruct) public employeeList;
   address[] public addressIndexes;
-  uint256 public lastDistributionTime;
 
   ERC20 token;
-  DateTime dt;
-
-  constructor (ERC20 _token, DateTime _dt)
+  
+  constructor (ERC20 _token)
     public
   {
     require(_token != address(0));
-    require(_dt != address(0));
 
     token = _token;
-    dt = _dt;
   }
 
   function addEmployee (
@@ -96,19 +93,38 @@ contract BonusPayout is Ownable {
     return(token.transfer(_beneficiary, _bbkAmount));
   }
 
-  function distributePayouts()
+  function getTotalPayoutAmount()
     public
-  { 
-    // solium-disable-next-line security/no-block-members
-    //require(dt.getMonth(block.timestamp) % 3 == 0);
+    view
+    returns(uint256)
+  {
     uint256 totalAmount;
   
     for (uint i = 0; i < addressIndexes.length; i++) {
       address _address = addressIndexes[i];
       uint256 _amount = employeeList[_address].quarterlyAmount;
   
-      if(employeeList[_address].startingBalance != 0) {
-        _amount.add(employeeList[_address].startingBalance);
+      if (employeeList[_address].startingBalance != 0) {
+        _amount = _amount.add(employeeList[_address].startingBalance);
+      }
+      totalAmount = totalAmount.add(_amount);
+    }
+
+    return totalAmount;
+  }
+
+  function distributePayouts()
+    public
+    onlyOwner
+  {
+    uint256 totalAmount;
+  
+    for (uint i = 0; i < addressIndexes.length; i++) {
+      address _address = addressIndexes[i];
+      uint256 _amount = employeeList[_address].quarterlyAmount;
+  
+      if (employeeList[_address].startingBalance != 0) {
+        _amount = _amount.add(employeeList[_address].startingBalance);
         employeeList[_address].startingBalance = 0;
       }
       totalAmount = totalAmount.add(_amount);
@@ -116,8 +132,7 @@ contract BonusPayout is Ownable {
     }
 
     // solium-disable-next-line security/no-block-members
-    lastDistributionTime = block.timestamp;
-    emit DistributeEvent(lastDistributionTime, totalAmount);
+    emit DistributeEvent(block.timestamp, totalAmount);
   }
 
   function claim(uint256 _amount)
