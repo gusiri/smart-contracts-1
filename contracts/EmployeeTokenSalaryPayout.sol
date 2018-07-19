@@ -1,4 +1,4 @@
-pragma solidity 0.4.23;
+pragma solidity ^0.4.23;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -8,7 +8,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 /**
   @title Contract for doing payouts to Brickblock employees on quarterly basis.
 */
-contract BonusPayout is Ownable {
+contract EmployeeTokenSalaryPayout is Ownable {
   using SafeMath for uint256;
 
   // Events

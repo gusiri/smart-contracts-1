@@ -5,14 +5,14 @@ const {
   testAddManyEmployee,
   testRemoveEmployee,
   testPayout
-} = require('../helpers/bpo')
+} = require('../helpers/etsp')
 
-const BonusPayoutArtifact = artifacts.require('BonusPayout')
+const BonusPayoutArtifact = artifacts.require('EmployeeTokenSalaryPayout')
 const DummyContractArtifact = artifacts.require('./stubs/RemoteContractStub')
 const { finalizedBBK } = require('../helpers/bbk')
 
 describe('when distributing BBK bonus payouts', () => {
-  contract('BonusPayout', accounts => {
+  contract('EmployeeTokenSalaryPayout', accounts => {
     const owner = accounts[0]
     const bbkHolder = accounts[1]
     const employees = accounts.slice(2)
