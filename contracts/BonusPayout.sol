@@ -153,13 +153,6 @@ contract BonusPayout is Ownable {
     emit DistributeEvent(block.timestamp, totalAmount);
   }
 
-  function claim(uint256 _amount)
-    public
-    onlyOwner
-  {
-    token.transfer(owner, _amount);
-  }
-
   function claimAll()
     public
     onlyOwner
