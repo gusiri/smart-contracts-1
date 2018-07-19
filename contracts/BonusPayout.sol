@@ -25,7 +25,7 @@ contract BonusPayout is Ownable {
 
 
   mapping(address => Employee) public employees;
-  address[] public addressIndexes;
+  address[] public employeeAddressList;
 
   ERC20 token;
   
@@ -52,10 +52,10 @@ contract BonusPayout is Ownable {
     require(_quarterlyAmount > 0);
     require(employee.quarterlyAmount == 0);
 
-    addressIndexes.push(_beneficiary);
+    employeeAddressList.push(_beneficiary);
     employee.startingBalance = _startingBalance;
     employee.quarterlyAmount = _quarterlyAmount;
-    employee.index = addressIndexes.length-1;
+    employee.index = employeeAddressList.length-1;
 
     // solium-disable-next-line security/no-block-members
     emit AddEmployeeEvent(_beneficiary, block.timestamp);
@@ -76,13 +76,13 @@ contract BonusPayout is Ownable {
 
     // if index is not the last entry
     // swap deleted user index with the last one
-    if (deletedUser.index != addressIndexes.length-1) {
-      address lastAddress = addressIndexes[addressIndexes.length-1];
-      addressIndexes[deletedUser.index] = lastAddress;
+    if (deletedUser.index != employeeAddressList.length-1) {
+      address lastAddress = employeeAddressList[employeeAddressList.length-1];
+      employeeAddressList[deletedUser.index] = lastAddress;
       employees[lastAddress].index = deletedUser.index; 
     }
     delete employees[_beneficiary];
-    addressIndexes.length--;
+    employeeAddressList.length--;
     // solium-disable-next-line security/no-block-members
     emit RemoveEmployeeEvent(_beneficiary, block.timestamp);
 
@@ -118,8 +118,8 @@ contract BonusPayout is Ownable {
   {
     uint256 totalAmount;
   
-    for (uint i = 0; i < addressIndexes.length; i++) {
-      address _address = addressIndexes[i];
+    for (uint i = 0; i < employeeAddressList.length; i++) {
+      address _address = employeeAddressList[i];
       uint256 _amount = employees[_address].quarterlyAmount;
   
       if (employees[_address].startingBalance != 0) {
@@ -137,8 +137,8 @@ contract BonusPayout is Ownable {
   {
     uint256 totalAmount;
   
-    for (uint i = 0; i < addressIndexes.length; i++) {
-      address _address = addressIndexes[i];
+    for (uint i = 0; i < employeeAddressList.length; i++) {
+      address _address = employeeAddressList[i];
       uint256 _amount = employees[_address].quarterlyAmount;
 
       if (employees[_address].startingBalance != 0) {
