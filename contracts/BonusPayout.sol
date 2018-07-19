@@ -49,6 +49,7 @@ contract BonusPayout is Ownable {
     EmployeeStruct storage employee = employees[_beneficiary];
 
     require(employee.quarterlyAmount == 0);
+
     addressIndexes.push(_beneficiary);
     employee.startingBalance = _startingBalance;
     employee.quarterlyAmount = _quarterlyAmount;
@@ -135,8 +136,6 @@ contract BonusPayout is Ownable {
     for (uint i = 0; i < addressIndexes.length; i++) {
       address _address = addressIndexes[i];
       uint256 _amount = employees[_address].quarterlyAmount;
-
-      require(employees[_address].quarterlyAmount > 0);
 
       if (employees[_address].startingBalance != 0) {
         _amount = _amount.add(employees[_address].startingBalance);
