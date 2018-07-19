@@ -12,10 +12,10 @@ contract BonusPayout is Ownable {
   using SafeMath for uint256;
 
   //Events
-  event DistributeEvent(uint256 timestamp, uint256 amount);
-  event AddEmployeeEvent(address _address, uint256 timestamp);
-  event RemoveEmployeeEvent(address _address, uint256 timestamp);
-  event ChangeQuarterlyAmountEvent(address _address, uint256 timestamp, uint256 newAmount);
+  event DistributeEvent (uint256 indexed timestamp, uint256 amount);
+  event AddEmployeeEvent(address indexed _address, uint256 indexed timestamp);
+  event RemoveEmployeeEvent(address indexed _address, uint256 indexed timestamp);
+  event ChangeQuarterlyAmountEvent(address indexed _address, uint256 indexed timestamp, uint256 newAmount);
 
   struct EmployeeStruct {
     uint256 startingBalance;
@@ -25,7 +25,7 @@ contract BonusPayout is Ownable {
   }
 
 
-  mapping(address => EmployeeStruct) public employeeList;
+  mapping(address => EmployeeStruct) public employees;
   address[] public addressIndexes;
 
   ERC20 token;
@@ -39,13 +39,15 @@ contract BonusPayout is Ownable {
   }
 
   function addEmployee (
-    address _beneficiary, uint256 _quarterlyAmount, uint256 _startingBalance
+    address _beneficiary,
+    uint256 _quarterlyAmount,
+    uint256 _startingBalance
   )
     public
     onlyOwner
     returns(bool)
   {
-    EmployeeStruct storage employee = employeeList[_beneficiary];
+    EmployeeStruct storage employee = employees[_beneficiary];
 
     require(employee.isActive == false);
     addressIndexes.push(_beneficiary);
@@ -66,7 +68,7 @@ contract BonusPayout is Ownable {
     onlyOwner
     returns(bool)
   {
-    EmployeeStruct memory deletedUser = employeeList[_beneficiary];
+    EmployeeStruct memory deletedUser = employees[_beneficiary];
     require(deletedUser.isActive == true);
 
     require(payout(_beneficiary, _endingBalance));
@@ -76,9 +78,9 @@ contract BonusPayout is Ownable {
     if (deletedUser.index != addressIndexes.length-1) {
       address lastAddress = addressIndexes[addressIndexes.length-1];
       addressIndexes[deletedUser.index] = lastAddress;
-      employeeList[lastAddress].index = deletedUser.index; 
+      employees[lastAddress].index = deletedUser.index; 
     }
-    delete employeeList[_beneficiary];
+    delete employees[_beneficiary];
     addressIndexes.length--;
     // solium-disable-next-line security/no-block-members
     emit RemoveEmployeeEvent(_beneficiary, block.timestamp);
@@ -91,7 +93,7 @@ contract BonusPayout is Ownable {
     onlyOwner
     returns(bool)
   {
-    employeeList[_beneficiary].quarterlyAmount = newAmount;
+    employees[_beneficiary].quarterlyAmount = newAmount;
 
     // solium-disable-next-line security/no-block-members
     emit ChangeQuarterlyAmountEvent(_beneficiary, block.timestamp, newAmount);
@@ -115,10 +117,10 @@ contract BonusPayout is Ownable {
   
     for (uint i = 0; i < addressIndexes.length; i++) {
       address _address = addressIndexes[i];
-      uint256 _amount = employeeList[_address].quarterlyAmount;
+      uint256 _amount = employees[_address].quarterlyAmount;
   
-      if (employeeList[_address].startingBalance != 0) {
-        _amount = _amount.add(employeeList[_address].startingBalance);
+      if (employees[_address].startingBalance != 0) {
+        _amount = _amount.add(employees[_address].startingBalance);
       }
       totalAmount = totalAmount.add(_amount);
     }
@@ -134,11 +136,11 @@ contract BonusPayout is Ownable {
   
     for (uint i = 0; i < addressIndexes.length; i++) {
       address _address = addressIndexes[i];
-      uint256 _amount = employeeList[_address].quarterlyAmount;
+      uint256 _amount = employees[_address].quarterlyAmount;
   
-      if (employeeList[_address].startingBalance != 0) {
-        _amount = _amount.add(employeeList[_address].startingBalance);
-        employeeList[_address].startingBalance = 0;
+      if (employees[_address].startingBalance != 0) {
+        _amount = _amount.add(employees[_address].startingBalance);
+        employees[_address].startingBalance = 0;
       }
       totalAmount = totalAmount.add(_amount);
       payout(_address, _amount);

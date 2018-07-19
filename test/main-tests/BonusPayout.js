@@ -38,19 +38,7 @@ describe('when distributing BBK bonus payouts', () => {
       })
     })
 
-    it('should add employee', async () => {
-      await testAddEmployee(
-        bpo,
-        employees[0],
-        defaultBbkSalaryAmount,
-        defaultStartingBalance,
-        {
-          from: owner
-        }
-      )
-    })
-
-    it('should remove employee', async () => {
+    it('should add & remove employee', async () => {
       await testAddEmployee(
         bpo,
         employees[0],
@@ -79,6 +67,36 @@ describe('when distributing BBK bonus payouts', () => {
         from: owner,
         gasPrice
       })
+    })
+
+    it('should get correct total payout amount', async () => {
+      await testAddManyEmployee(
+        bpo,
+        employees,
+        new BigNumber(defaultBbkSalaryAmount),
+        defaultStartingBalance,
+        {
+          from: owner
+        }
+      )
+      const expectedPayout = await bpo.getTotalPayoutAmount()
+
+      const realPayoutResult = await testPayout(bbk, bpo, employees, {
+        from: owner,
+        gasPrice
+      })
+
+      assert.equal(
+        realPayoutResult.payoutAmount.toString(),
+        expectedPayout.toString(),
+        'Expected payout should match'
+      )
+
+      // eslint-disable-next-line no-console
+      console.log(
+        `Used gas amount for ${employees.length} accounts`,
+        realPayoutResult.gasUsed
+      )
     })
   })
 })

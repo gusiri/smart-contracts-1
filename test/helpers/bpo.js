@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 // BonusPayout Helper
 
 const BigNumber = require('bignumber.js')
@@ -18,7 +16,7 @@ const testAddEmployee = async (
     employeeQuarterlyAmount,
     index,
     isActive
-  ] = await bpo.employeeList(employee)
+  ] = await bpo.employees(employee)
 
   assert.equal(
     employeeStartingBalance.toString(),
@@ -163,7 +161,10 @@ const testPayout = async (bbk, bpo, employees, config) => {
     'Total distributed payout amount should match the expected'
   )
 
-  console.log(`Used gas amount for ${employees.length} accounts`, tx.gasUsed)
+  return {
+    payoutAmount: distributeEvent.amount,
+    gasUsed: tx.gasUsed
+  }
 }
 
 const getEmployeeData = async (bpo, employeeAddress) => {
@@ -172,7 +173,7 @@ const getEmployeeData = async (bpo, employeeAddress) => {
     quarterlyAmount,
     index,
     isActive
-  ] = await bpo.employeeList(employeeAddress)
+  ] = await bpo.employees(employeeAddress)
 
   return {
     startingBalance,
