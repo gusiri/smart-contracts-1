@@ -48,6 +48,8 @@ contract BonusPayout is Ownable {
   {
     EmployeeStruct storage employee = employees[_beneficiary];
 
+    require(_beneficiary != address(0));
+    require(_quarterlyAmount != 0);
     require(employee.quarterlyAmount == 0);
 
     addressIndexes.push(_beneficiary);
@@ -67,8 +69,9 @@ contract BonusPayout is Ownable {
     returns(bool)
   {
     EmployeeStruct memory deletedUser = employees[_beneficiary];
-    require(deletedUser.quarterlyAmount > 0);
 
+    require(_beneficiary != address(0));
+    require(deletedUser.quarterlyAmount > 0);
     require(payout(_beneficiary, _endingBalance));
 
     // if index is not the last entry
@@ -91,6 +94,7 @@ contract BonusPayout is Ownable {
     onlyOwner
     returns(bool)
   {
+    require(_beneficiary != address(0));
     require(newAmount != 0);
     employees[_beneficiary].quarterlyAmount = newAmount;
 
