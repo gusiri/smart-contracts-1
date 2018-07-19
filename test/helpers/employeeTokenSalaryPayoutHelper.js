@@ -4,18 +4,23 @@ const BigNumber = require('bignumber.js')
 const { waitForEvent, getReceipt } = require('./general')
 
 const testAddEmployee = async (
-  etsp,
+  employeeTokenSalaryPayoutContract,
   employee,
   quarterlyAmount,
   startingBalance,
   config
 ) => {
-  await etsp.addEmployee(employee, quarterlyAmount, startingBalance, config)
+  await employeeTokenSalaryPayoutContract.addEmployee(
+    employee,
+    quarterlyAmount,
+    startingBalance,
+    config
+  )
   const [
     employeeStartingBalance,
     employeeQuarterlyAmount,
     index
-  ] = await etsp.employees(employee)
+  ] = await employeeTokenSalaryPayoutContract.employees(employee)
 
   assert.equal(
     employeeStartingBalance.toString(),
@@ -37,7 +42,7 @@ const testAddEmployee = async (
 }
 
 const testAddManyEmployee = async (
-  etsp,
+  employeeTokenSalaryPayoutContract,
   employees,
   quarterlyAmount,
   startingBalance,
@@ -46,7 +51,7 @@ const testAddManyEmployee = async (
   for (let index = 0; index < employees.length; index++) {
     const employee = employees[index]
     await testAddEmployee(
-      etsp,
+      employeeTokenSalaryPayoutContract,
       employee,
       quarterlyAmount,
       startingBalance,
@@ -57,17 +62,28 @@ const testAddManyEmployee = async (
 
 const testRemoveEmployee = async (
   bbk,
-  etsp,
+  employeeTokenSalaryPayoutContract,
   employee,
   endingBalance,
   config
 ) => {
-  const preBonusContractBbkBalance = await bbk.balanceOf(etsp.address)
+  const preBonusContractBbkBalance = await bbk.balanceOf(
+    employeeTokenSalaryPayoutContract.address
+  )
   const preEmployeeBbkBalance = await bbk.balanceOf(employee)
-  await etsp.removeEmployee(employee, endingBalance, config)
+  await employeeTokenSalaryPayoutContract.removeEmployee(
+    employee,
+    endingBalance,
+    config
+  )
 
-  const employeeData = await getEmployeeData(etsp, employee)
-  const postBonusContractBbkBalance = await bbk.balanceOf(etsp.address)
+  const employeeData = await getEmployeeData(
+    employeeTokenSalaryPayoutContract,
+    employee
+  )
+  const postBonusContractBbkBalance = await bbk.balanceOf(
+    employeeTokenSalaryPayoutContract.address
+  )
   const postEmployeeBbkBalance = await bbk.balanceOf(employee)
 
   const expectedBonusContractBalance = preBonusContractBbkBalance.minus(
@@ -91,8 +107,15 @@ const testRemoveEmployee = async (
   return employeeData
 }
 
-const testPayout = async (bbk, etsp, employees, config) => {
-  const preBonusContractBbkBalance = await bbk.balanceOf(etsp.address)
+const testPayout = async (
+  bbk,
+  employeeTokenSalaryPayoutContract,
+  employees,
+  config
+) => {
+  const preBonusContractBbkBalance = await bbk.balanceOf(
+    employeeTokenSalaryPayoutContract.address
+  )
   let expectedTotalDistroAmount = new BigNumber(0)
 
   //collect employee data before payout
@@ -100,7 +123,10 @@ const testPayout = async (bbk, etsp, employees, config) => {
 
   for (let index = 0; index < employees.length; index++) {
     const employeeAddress = employees[index]
-    const employeeData = await getEmployeeData(etsp, employeeAddress)
+    const employeeData = await getEmployeeData(
+      employeeTokenSalaryPayoutContract,
+      employeeAddress
+    )
     employeeData.balance = await bbk.balanceOf(employeeAddress)
     employeeData.expectedBalanceAfterPayout = employeeData.balance
       .plus(employeeData.startingBalance)
@@ -112,20 +138,29 @@ const testPayout = async (bbk, etsp, employees, config) => {
     preEmployeeObject.push(employeeData)
   }
 
-  const txHash = await etsp.distributePayouts(config)
+  const txHash = await employeeTokenSalaryPayoutContract.distributePayouts(
+    config
+  )
   const tx = await getReceipt(txHash)
 
   //collect employee data after payout
   const postEmployeeObject = []
   for (let index = 0; index < employees.length; index++) {
     const employeeAddress = employees[index]
-    const employeeData = await getEmployeeData(etsp, employeeAddress)
+    const employeeData = await getEmployeeData(
+      employeeTokenSalaryPayoutContract,
+      employeeAddress
+    )
     employeeData.balance = await bbk.balanceOf(employeeAddress)
     postEmployeeObject.push(employeeData)
   }
 
-  const postBonusContractBbkBalance = await bbk.balanceOf(etsp.address)
-  const { args: distributeEvent } = await waitForEvent(etsp.DistributeEvent())
+  const postBonusContractBbkBalance = await bbk.balanceOf(
+    employeeTokenSalaryPayoutContract.address
+  )
+  const { args: distributeEvent } = await waitForEvent(
+    employeeTokenSalaryPayoutContract.DistributeEvent()
+  )
   const expectedBonusContractBalance = preBonusContractBbkBalance.minus(
     expectedTotalDistroAmount
   )
@@ -159,10 +194,15 @@ const testPayout = async (bbk, etsp, employees, config) => {
   }
 }
 
-const getEmployeeData = async (etsp, employeeAddress) => {
-  const [startingBalance, quarterlyAmount, index] = await etsp.employees(
-    employeeAddress
-  )
+const getEmployeeData = async (
+  employeeTokenSalaryPayoutContract,
+  employeeAddress
+) => {
+  const [
+    startingBalance,
+    quarterlyAmount,
+    index
+  ] = await employeeTokenSalaryPayoutContract.employees(employeeAddress)
 
   return {
     startingBalance,

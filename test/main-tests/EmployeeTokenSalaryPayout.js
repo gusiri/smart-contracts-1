@@ -5,7 +5,7 @@ const {
   testAddManyEmployee,
   testRemoveEmployee,
   testPayout
-} = require('../helpers/etsp')
+} = require('../helpers/employeeTokenSalaryPayoutHelper')
 
 const BonusPayoutArtifact = artifacts.require('EmployeeTokenSalaryPayout')
 const DummyContractArtifact = artifacts.require('./stubs/RemoteContractStub')
@@ -19,7 +19,7 @@ describe('when distributing BBK bonus payouts', () => {
     const defaultBbkSalaryAmount = 1000
     const defaultStartingBalance = 3234
     const defaultEndingBalance = 34552
-    let etsp
+    let employeeTokenSalaryPayoutContract
     let bbk
 
     beforeEach('setup contracts', async () => {
@@ -32,15 +32,21 @@ describe('when distributing BBK bonus payouts', () => {
         [bbkHolder],
         new BigNumber(1e24)
       )
-      etsp = await BonusPayoutArtifact.new(bbk.address)
-      await bbk.transfer(etsp.address, new BigNumber('1e24'), {
-        from: bbkHolder
-      })
+      employeeTokenSalaryPayoutContract = await BonusPayoutArtifact.new(
+        bbk.address
+      )
+      await bbk.transfer(
+        employeeTokenSalaryPayoutContract.address,
+        new BigNumber('1e24'),
+        {
+          from: bbkHolder
+        }
+      )
     })
 
     it('should add & remove employee', async () => {
       await testAddEmployee(
-        etsp,
+        employeeTokenSalaryPayoutContract,
         employees[0],
         defaultBbkSalaryAmount,
         defaultStartingBalance,
@@ -48,14 +54,20 @@ describe('when distributing BBK bonus payouts', () => {
           from: owner
         }
       )
-      await testRemoveEmployee(bbk, etsp, employees[0], defaultEndingBalance, {
-        from: owner
-      })
+      await testRemoveEmployee(
+        bbk,
+        employeeTokenSalaryPayoutContract,
+        employees[0],
+        defaultEndingBalance,
+        {
+          from: owner
+        }
+      )
     })
 
     it('should distribute bbk to all registered employees', async () => {
       await testAddManyEmployee(
-        etsp,
+        employeeTokenSalaryPayoutContract,
         employees,
         new BigNumber(defaultBbkSalaryAmount),
         defaultStartingBalance,
@@ -63,7 +75,7 @@ describe('when distributing BBK bonus payouts', () => {
           from: owner
         }
       )
-      await testPayout(bbk, etsp, employees, {
+      await testPayout(bbk, employeeTokenSalaryPayoutContract, employees, {
         from: owner,
         gasPrice
       })
@@ -71,7 +83,7 @@ describe('when distributing BBK bonus payouts', () => {
 
     it('should get correct total payout amount', async () => {
       await testAddManyEmployee(
-        etsp,
+        employeeTokenSalaryPayoutContract,
         employees,
         new BigNumber(defaultBbkSalaryAmount),
         defaultStartingBalance,
@@ -79,12 +91,17 @@ describe('when distributing BBK bonus payouts', () => {
           from: owner
         }
       )
-      const expectedPayout = await etsp.getTotalPayoutAmount()
+      const expectedPayout = await employeeTokenSalaryPayoutContract.getTotalPayoutAmount()
 
-      const realPayoutResult = await testPayout(bbk, etsp, employees, {
-        from: owner,
-        gasPrice
-      })
+      const realPayoutResult = await testPayout(
+        bbk,
+        employeeTokenSalaryPayoutContract,
+        employees,
+        {
+          from: owner,
+          gasPrice
+        }
+      )
 
       assert.equal(
         realPayoutResult.payoutAmount.toString(),
