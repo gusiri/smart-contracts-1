@@ -90,6 +90,7 @@ contract BonusPayout is Ownable {
     onlyOwner
     returns(bool)
   {
+    require(newAmount != 0);
     employees[_beneficiary].quarterlyAmount = newAmount;
 
     // solium-disable-next-line security/no-block-members
