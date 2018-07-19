@@ -19,7 +19,7 @@ describe('when distributing BBK bonus payouts', () => {
     const defaultBbkSalaryAmount = 1000
     const defaultStartingBalance = 3234
     const defaultEndingBalance = 34552
-    let bpo
+    let etsp
     let bbk
 
     beforeEach('setup contracts', async () => {
@@ -32,15 +32,15 @@ describe('when distributing BBK bonus payouts', () => {
         [bbkHolder],
         new BigNumber(1e24)
       )
-      bpo = await BonusPayoutArtifact.new(bbk.address)
-      await bbk.transfer(bpo.address, new BigNumber('1e24'), {
+      etsp = await BonusPayoutArtifact.new(bbk.address)
+      await bbk.transfer(etsp.address, new BigNumber('1e24'), {
         from: bbkHolder
       })
     })
 
     it('should add & remove employee', async () => {
       await testAddEmployee(
-        bpo,
+        etsp,
         employees[0],
         defaultBbkSalaryAmount,
         defaultStartingBalance,
@@ -48,14 +48,14 @@ describe('when distributing BBK bonus payouts', () => {
           from: owner
         }
       )
-      await testRemoveEmployee(bbk, bpo, employees[0], defaultEndingBalance, {
+      await testRemoveEmployee(bbk, etsp, employees[0], defaultEndingBalance, {
         from: owner
       })
     })
 
     it('should distribute bbk to all registered employees', async () => {
       await testAddManyEmployee(
-        bpo,
+        etsp,
         employees,
         new BigNumber(defaultBbkSalaryAmount),
         defaultStartingBalance,
@@ -63,7 +63,7 @@ describe('when distributing BBK bonus payouts', () => {
           from: owner
         }
       )
-      await testPayout(bbk, bpo, employees, {
+      await testPayout(bbk, etsp, employees, {
         from: owner,
         gasPrice
       })
@@ -71,7 +71,7 @@ describe('when distributing BBK bonus payouts', () => {
 
     it('should get correct total payout amount', async () => {
       await testAddManyEmployee(
-        bpo,
+        etsp,
         employees,
         new BigNumber(defaultBbkSalaryAmount),
         defaultStartingBalance,
@@ -79,9 +79,9 @@ describe('when distributing BBK bonus payouts', () => {
           from: owner
         }
       )
-      const expectedPayout = await bpo.getTotalPayoutAmount()
+      const expectedPayout = await etsp.getTotalPayoutAmount()
 
-      const realPayoutResult = await testPayout(bbk, bpo, employees, {
+      const realPayoutResult = await testPayout(bbk, etsp, employees, {
         from: owner,
         gasPrice
       })
