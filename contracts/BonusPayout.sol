@@ -6,25 +6,25 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 
 /**
-  @title Contract for doing payouts to Brickblock employees on monthly basis.
+  @title Contract for doing payouts to Brickblock employees on quarterly basis.
 */
 contract BonusPayout is Ownable {
   using SafeMath for uint256;
 
-  //Events
-  event DistributeEvent (uint256 indexed timestamp, uint256 amount);
-  event AddEmployeeEvent(address indexed _address, uint256 indexed timestamp);
-  event RemoveEmployeeEvent(address indexed _address, uint256 indexed timestamp);
-  event ChangeQuarterlyAmountEvent(address indexed _address, uint256 indexed timestamp, uint256 newAmount);
+  // Events
+  event DistributeEvent(uint256 timestamp, uint256 amount);
+  event AddEmployeeEvent(address indexed _address, uint256 timestamp);
+  event RemoveEmployeeEvent(address indexed _address, uint256 timestamp);
+  event ChangeQuarterlyAmountEvent(address indexed _address, uint256 timestamp, uint256 newAmount);
 
-  struct EmployeeStruct {
+  struct Employee {
     uint256 startingBalance;
     uint256 quarterlyAmount;
     uint256 index;
   }
 
 
-  mapping(address => EmployeeStruct) public employees;
+  mapping(address => Employee) public employees;
   address[] public addressIndexes;
 
   ERC20 token;
@@ -46,10 +46,10 @@ contract BonusPayout is Ownable {
     onlyOwner
     returns(bool)
   {
-    EmployeeStruct storage employee = employees[_beneficiary];
+    Employee storage employee = employees[_beneficiary];
 
     require(_beneficiary != address(0));
-    require(_quarterlyAmount != 0);
+    require(_quarterlyAmount > 0);
     require(employee.quarterlyAmount == 0);
 
     addressIndexes.push(_beneficiary);
@@ -68,7 +68,7 @@ contract BonusPayout is Ownable {
     onlyOwner
     returns(bool)
   {
-    EmployeeStruct memory deletedUser = employees[_beneficiary];
+    Employee memory deletedUser = employees[_beneficiary];
 
     require(_beneficiary != address(0));
     require(deletedUser.quarterlyAmount > 0);
@@ -95,7 +95,7 @@ contract BonusPayout is Ownable {
     returns(bool)
   {
     require(_beneficiary != address(0));
-    require(newAmount != 0);
+    require(newAmount > 0);
     employees[_beneficiary].quarterlyAmount = newAmount;
 
     // solium-disable-next-line security/no-block-members
