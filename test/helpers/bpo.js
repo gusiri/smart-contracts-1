@@ -14,8 +14,7 @@ const testAddEmployee = async (
   const [
     employeeStartingBalance,
     employeeQuarterlyAmount,
-    index,
-    isActive
+    index
   ] = await bpo.employees(employee)
 
   assert.equal(
@@ -30,13 +29,10 @@ const testAddEmployee = async (
     'Quarterly amount does not match'
   )
 
-  assert.equal(isActive.toString(), 'true', 'Employee is not set to active')
-
   return {
     startingBalance,
     quarterlyAmount,
-    index,
-    isActive
+    index
   }
 }
 
@@ -92,11 +88,7 @@ const testRemoveEmployee = async (
     'Employee balance does not match with the expected.'
   )
 
-  assert.equal(
-    employeeData.isActive.toString(),
-    'false',
-    'Employee is not set to false'
-  )
+  return employeeData
 }
 
 const testPayout = async (bbk, bpo, employees, config) => {
@@ -168,18 +160,14 @@ const testPayout = async (bbk, bpo, employees, config) => {
 }
 
 const getEmployeeData = async (bpo, employeeAddress) => {
-  const [
-    startingBalance,
-    quarterlyAmount,
-    index,
-    isActive
-  ] = await bpo.employees(employeeAddress)
+  const [startingBalance, quarterlyAmount, index] = await bpo.employees(
+    employeeAddress
+  )
 
   return {
     startingBalance,
     quarterlyAmount,
-    index,
-    isActive
+    index
   }
 }
 

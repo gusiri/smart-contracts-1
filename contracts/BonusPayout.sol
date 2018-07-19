@@ -21,7 +21,6 @@ contract BonusPayout is Ownable {
     uint256 startingBalance;
     uint256 quarterlyAmount;
     uint256 index;
-    bool isActive;
   }
 
 
@@ -49,13 +48,11 @@ contract BonusPayout is Ownable {
   {
     EmployeeStruct storage employee = employees[_beneficiary];
 
-    require(employee.isActive == false);
+    require(employee.quarterlyAmount == 0);
     addressIndexes.push(_beneficiary);
     employee.startingBalance = _startingBalance;
     employee.quarterlyAmount = _quarterlyAmount;
     employee.index = addressIndexes.length-1;
-
-    employee.isActive = true;
 
     // solium-disable-next-line security/no-block-members
     emit AddEmployeeEvent(_beneficiary, block.timestamp);
@@ -69,7 +66,7 @@ contract BonusPayout is Ownable {
     returns(bool)
   {
     EmployeeStruct memory deletedUser = employees[_beneficiary];
-    require(deletedUser.isActive == true);
+    require(deletedUser.quarterlyAmount > 0);
 
     require(payout(_beneficiary, _endingBalance));
 
@@ -137,7 +134,9 @@ contract BonusPayout is Ownable {
     for (uint i = 0; i < addressIndexes.length; i++) {
       address _address = addressIndexes[i];
       uint256 _amount = employees[_address].quarterlyAmount;
-  
+
+      require(employees[_address].quarterlyAmount > 0);
+
       if (employees[_address].startingBalance != 0) {
         _amount = _amount.add(employees[_address].startingBalance);
         employees[_address].startingBalance = 0;
