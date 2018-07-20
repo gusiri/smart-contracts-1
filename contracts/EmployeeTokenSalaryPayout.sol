@@ -27,14 +27,14 @@ contract EmployeeTokenSalaryPayout is Ownable {
   mapping(address => Employee) public employees;
   address[] public employeeAddressList;
 
-  IBrickblockToken token;
+  IBrickblockToken bbkToken;
   
-  constructor (IBrickblockToken _token)
+  constructor (IBrickblockToken _bbkToken)
     public
   {
-    require(_token != address(0));
+    require(_bbkToken != address(0));
 
-    token = _token;
+    bbkToken = _bbkToken;
   }
 
   function addEmployee (
@@ -108,7 +108,7 @@ contract EmployeeTokenSalaryPayout is Ownable {
     private
     returns(bool)
   {
-    return(token.transfer(_beneficiary, _bbkAmount));
+    return(bbkToken.transfer(_beneficiary, _bbkAmount));
   }
 
   function getTotalPayoutAmount()
@@ -157,7 +157,7 @@ contract EmployeeTokenSalaryPayout is Ownable {
     public
     onlyOwner
   {
-    uint256 _amount = token.balanceOf(address(this));
-    token.transfer(owner, _amount);
+    uint256 _amount = bbkToken.balanceOf(address(this));
+    bbkToken.transfer(owner, _amount);
   }
 }

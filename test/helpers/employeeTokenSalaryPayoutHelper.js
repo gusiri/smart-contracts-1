@@ -7,45 +7,40 @@ const testAddEmployee = async (
   employeeTokenSalaryPayoutContract,
   employee,
   quarterlyAmount,
-  startingBalance,
+  initialPayout,
   config
 ) => {
   await employeeTokenSalaryPayoutContract.addEmployee(
     employee,
     quarterlyAmount,
-    startingBalance,
+    initialPayout,
     config
   )
-  const [
-    employeeStartingBalance,
-    employeeQuarterlyAmount,
-    index
-  ] = await employeeTokenSalaryPayoutContract.employees(employee)
 
+  const employeeData = await getEmployeeData(
+    employeeTokenSalaryPayoutContract,
+    employee
+  )
   assert.equal(
-    employeeStartingBalance.toString(),
-    startingBalance.toString(),
-    'Starting balance does not match'
+    employeeData.initialPayout.toString(),
+    initialPayout.toString(),
+    'initialPayout balance does not match'
   )
 
   assert.equal(
-    employeeQuarterlyAmount.toString(),
+    employeeData.quarterlyAmount.toString(),
     quarterlyAmount.toString(),
     'Quarterly amount does not match'
   )
 
-  return {
-    startingBalance,
-    quarterlyAmount,
-    index
-  }
+  return employeeData
 }
 
-const testAddManyEmployee = async (
+const testAddManyEmployees = async (
   employeeTokenSalaryPayoutContract,
   employees,
   quarterlyAmount,
-  startingBalance,
+  initialPayout,
   config
 ) => {
   for (let index = 0; index < employees.length; index++) {
@@ -54,7 +49,7 @@ const testAddManyEmployee = async (
       employeeTokenSalaryPayoutContract,
       employee,
       quarterlyAmount,
-      startingBalance,
+      initialPayout,
       config
     )
   }
@@ -129,7 +124,7 @@ const testPayout = async (
     )
     employeeData.balance = await bbk.balanceOf(employeeAddress)
     employeeData.expectedBalanceAfterPayout = employeeData.balance
-      .plus(employeeData.startingBalance)
+      .plus(employeeData.initialPayout)
       .plus(employeeData.quarterlyAmount)
 
     expectedTotalDistroAmount = expectedTotalDistroAmount.plus(
@@ -199,13 +194,13 @@ const getEmployeeData = async (
   employeeAddress
 ) => {
   const [
-    startingBalance,
+    initialPayout,
     quarterlyAmount,
     index
   ] = await employeeTokenSalaryPayoutContract.employees(employeeAddress)
 
   return {
-    startingBalance,
+    initialPayout,
     quarterlyAmount,
     index
   }
@@ -213,7 +208,7 @@ const getEmployeeData = async (
 
 module.exports = {
   testAddEmployee,
-  testAddManyEmployee,
+  testAddManyEmployees,
   testRemoveEmployee,
   testPayout
 }

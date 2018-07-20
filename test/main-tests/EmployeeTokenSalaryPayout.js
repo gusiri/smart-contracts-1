@@ -2,12 +2,14 @@ const BigNumber = require('bignumber.js')
 const { gasPrice } = require('../helpers/general')
 const {
   testAddEmployee,
-  testAddManyEmployee,
+  testAddManyEmployees,
   testRemoveEmployee,
   testPayout
 } = require('../helpers/employeeTokenSalaryPayoutHelper')
 
-const BonusPayoutArtifact = artifacts.require('EmployeeTokenSalaryPayout')
+const EmployeeTokenSalaryPayoutArtifact = artifacts.require(
+  'EmployeeTokenSalaryPayout'
+)
 const DummyContractArtifact = artifacts.require('./stubs/RemoteContractStub')
 const { finalizedBBK } = require('../helpers/bbk')
 
@@ -32,7 +34,7 @@ describe('when distributing BBK bonus payouts', () => {
         [bbkHolder],
         new BigNumber(1e24)
       )
-      employeeTokenSalaryPayoutContract = await BonusPayoutArtifact.new(
+      employeeTokenSalaryPayoutContract = await EmployeeTokenSalaryPayoutArtifact.new(
         bbk.address
       )
       await bbk.transfer(
@@ -66,7 +68,7 @@ describe('when distributing BBK bonus payouts', () => {
     })
 
     it('should distribute bbk to all registered employees', async () => {
-      await testAddManyEmployee(
+      await testAddManyEmployees(
         employeeTokenSalaryPayoutContract,
         employees,
         new BigNumber(defaultBbkSalaryAmount),
@@ -82,7 +84,7 @@ describe('when distributing BBK bonus payouts', () => {
     })
 
     it('should get correct total payout amount', async () => {
-      await testAddManyEmployee(
+      await testAddManyEmployees(
         employeeTokenSalaryPayoutContract,
         employees,
         new BigNumber(defaultBbkSalaryAmount),
