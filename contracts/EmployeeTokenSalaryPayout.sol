@@ -18,7 +18,7 @@ contract EmployeeTokenSalaryPayout is Ownable {
   event ChangeQuarterlyAmountEvent(address indexed _address, uint256 timestamp, uint256 newAmount);
 
   struct Employee {
-    uint256 startingBalance;
+    uint256 initialPayoutAmount;
     uint256 quarterlyAmount;
     uint256 index;
   }
@@ -46,16 +46,16 @@ contract EmployeeTokenSalaryPayout is Ownable {
     onlyOwner
     returns(bool)
   {
-    Employee storage employee = employees[_beneficiary];
+    Employee storage _employee = employees[_beneficiary];
 
     require(_beneficiary != address(0));
     require(_quarterlyAmount > 0);
-    require(employee.quarterlyAmount == 0);
+    require(_employee.quarterlyAmount == 0);
 
     employeeAddressList.push(_beneficiary);
-    employee.startingBalance = _startingBalance;
-    employee.quarterlyAmount = _quarterlyAmount;
-    employee.index = employeeAddressList.length-1;
+    _employee.initialPayoutAmount = _startingBalance;
+    _employee.quarterlyAmount = _quarterlyAmount;
+    _employee.index = employeeAddressList.length-1;
 
     // solium-disable-next-line security/no-block-members
     emit AddEmployeeEvent(_beneficiary, block.timestamp);
@@ -68,18 +68,18 @@ contract EmployeeTokenSalaryPayout is Ownable {
     onlyOwner
     returns(bool)
   {
-    Employee memory deletedUser = employees[_beneficiary];
+    Employee memory _deletedUser = employees[_beneficiary];
 
     require(_beneficiary != address(0));
-    require(deletedUser.quarterlyAmount > 0);
+    require(_deletedUser.quarterlyAmount > 0);
     require(payout(_beneficiary, _endingBalance));
 
     // if index is not the last entry
     // swap deleted user index with the last one
-    if (deletedUser.index != employeeAddressList.length-1) {
+    if (_deletedUser.index != employeeAddressList.length-1) {
       address lastAddress = employeeAddressList[employeeAddressList.length-1];
-      employeeAddressList[deletedUser.index] = lastAddress;
-      employees[lastAddress].index = deletedUser.index; 
+      employeeAddressList[_deletedUser.index] = lastAddress;
+      employees[lastAddress].index = _deletedUser.index; 
     }
     delete employees[_beneficiary];
     employeeAddressList.length--;
@@ -116,48 +116,48 @@ contract EmployeeTokenSalaryPayout is Ownable {
     view
     returns(uint256)
   {
-    uint256 totalAmount;
+    uint256 _totalAmount;
   
     for (uint i = 0; i < employeeAddressList.length; i++) {
       address _address = employeeAddressList[i];
       uint256 _amount = employees[_address].quarterlyAmount;
   
-      if (employees[_address].startingBalance != 0) {
-        _amount = _amount.add(employees[_address].startingBalance);
+      if (employees[_address].initialPayoutAmount != 0) {
+        _amount = _amount.add(employees[_address].initialPayoutAmount);
       }
-      totalAmount = totalAmount.add(_amount);
+      _totalAmount = _totalAmount.add(_amount);
     }
 
-    return totalAmount;
+    return _totalAmount;
   }
 
   function distributePayouts()
     public
     onlyOwner
   {
-    uint256 totalAmount;
+    uint256 _totalAmount;
   
     for (uint i = 0; i < employeeAddressList.length; i++) {
       address _address = employeeAddressList[i];
       uint256 _amount = employees[_address].quarterlyAmount;
 
-      if (employees[_address].startingBalance != 0) {
-        _amount = _amount.add(employees[_address].startingBalance);
-        employees[_address].startingBalance = 0;
+      if (employees[_address].initialPayoutAmount != 0) {
+        _amount = _amount.add(employees[_address].initialPayoutAmount);
+        employees[_address].initialPayoutAmount = 0;
       }
-      totalAmount = totalAmount.add(_amount);
+      _totalAmount = _totalAmount.add(_amount);
       payout(_address, _amount);
     }
 
     // solium-disable-next-line security/no-block-members
-    emit DistributeEvent(block.timestamp, totalAmount);
+    emit DistributeEvent(block.timestamp, _totalAmount);
   }
 
   function claimAll()
     public
     onlyOwner
   {
-    uint256 amount = token.balanceOf(address(this));
-    token.transfer(owner, amount);
+    uint256 _amount = token.balanceOf(address(this));
+    token.transfer(owner, _amount);
   }
 }
