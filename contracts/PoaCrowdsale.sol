@@ -84,7 +84,7 @@ contract PoaCrowdsale is PoaCommon {
 
   /// @notice Ensure that a buyer is whitelisted before buying
   modifier isBuyWhitelisted() {
-    require(isWhitelisted(msg.sender));
+    require(isWhitelisted(msg.sender), "msg.sender is not whitelisted for this action");
     _;
   }
 
@@ -107,17 +107,17 @@ contract PoaCrowdsale is PoaCommon {
     returns (bool)
   {
     // ensure that token has already been initialized
-    require(tokenInitialized());
+    require(tokenInitialized(), "Token contract has not been initialized yet");
     // ensure that crowdsale has not already been initialized
-    require(!crowdsaleInitialized());
+    require(!crowdsaleInitialized(), "Crowdsale contract has not been initialized yet");
 
     // validate initialize parameters
-    require(_fiatCurrency32 != bytes32(0));
-    require(_startTime > block.timestamp);
-    require(_fundingTimeout >= 60 * 60 * 24);
-    require(_activationTimeout >= 60 * 60 * 24 * 7);
-    require(_fundingGoalInCents > 0);
-    require(totalSupply() > _fundingGoalInCents);
+    require(_fiatCurrency32 != bytes32(0), "_fiatCurrency32 is empty");
+    require(_startTime > block.timestamp, "_startTime is in the past");
+    require(_fundingTimeout >= 60 * 60 * 24, "_fundingTimeout must be at least 1 day (specified in seconds)");
+    require(_activationTimeout >= 60 * 60 * 24 * 7, "_activationTimeout must be at least 7 days (specified in seconds)");
+    require(_fundingGoalInCents > 0, "_fundingGoalInCents must be higher than 0");
+    require(totalSupply() > _fundingGoalInCents, "totalSupply must be higher than the _fundingGoalInCents");
 
     // initialize non-sequential storage
     setFiatCurrency32(_fiatCurrency32);
@@ -127,7 +127,7 @@ contract PoaCrowdsale is PoaCommon {
     setFundingGoalInCents(_fundingGoalInCents);
 
     // run getRate once in order to see if rate is initialized, throws if not
-    require(getFiatRate() > 0);
+    require(getFiatRate() > 0, "No ETH <> Fiat exchange rate found. We need a valid exchange rate to initialize the crowdsale contract.");
 
     // set crowdsaleInitialized to true so cannot be initialized again
     setCrowdsaleInitialized(true);
@@ -156,7 +156,7 @@ contract PoaCrowdsale is PoaCommon {
     atEitherStage(Stages.PreFunding, Stages.FiatFunding)
     returns (bool)
   {
-    require(block.timestamp >= startTime());
+    require(block.timestamp >= startTime(), "You can't start the ETH sale before the set startTime()");
     enterStage(Stages.EthFunding);
     return true;
   }
@@ -173,7 +173,7 @@ contract PoaCrowdsale is PoaCommon {
     returns (bool)
   {
     // Do not allow funding less than 100 cents
-    require(_amountInCents >= 100);
+    require(_amountInCents >= 100, "You can't buy less than 1 EUR worth of tokens");
 
     uint256 _newFundedAmount = fundedAmountInCentsDuringFiatFunding().add(_amountInCents);
 
@@ -345,7 +345,7 @@ contract PoaCrowdsale is PoaCommon {
     returns (bool)
   {
     if (stage() != Stages.Failed) {
-      revert();
+      revert("Couldn't set stage to 'Failed'");
     }
     return true;
   }
@@ -357,11 +357,11 @@ contract PoaCrowdsale is PoaCommon {
     atStage(Stages.Failed)
     returns (bool)
   {
-    require(!isFiatInvestor(msg.sender));
+    require(!isFiatInvestor(msg.sender), "Fiat investors can't reclaim from the smart contract.");
     setTotalSupply(0);
     uint256 _refundAmount = investmentAmountPerUserInWei(msg.sender);
     setInvestmentAmountPerUserInWei(msg.sender, 0);
-    require(_refundAmount > 0);
+    require(_refundAmount > 0, "_refundAmount must be higher than 0");
     setFundedAmountInWei(fundedAmountInWei().sub(_refundAmount));
     msg.sender.transfer(_refundAmount);
     getContractAddress("Logger").call(
@@ -418,7 +418,7 @@ contract PoaCrowdsale is PoaCommon {
   {
     bytes4 _sig = bytes4(keccak256("getRate32(bytes32)"));
     address _exchangeRates = getContractAddress("ExchangeRates");
-    bytes32 _fiatCurrency = keccak256(fiatCurrency());
+    bytes32 _fiatCurrency = keccak256(abi.encodePacked(fiatCurrency()));
 
     assembly {
       let _call := mload(0x40) // set _call to free memory pointer

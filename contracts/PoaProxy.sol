@@ -48,9 +48,9 @@ contract PoaProxy is PoaProxyCommon {
     public
   {
     // Ensure that none of the given addresses are empty
-    require(_poaTokenMaster != address(0));
-    require(_poaCrowdsaleMaster != address(0));
-    require(_registry != address(0));
+    require(_poaTokenMaster != address(0), "_poaTokenMaster must be a valid Ethereum address");
+    require(_poaCrowdsaleMaster != address(0), "_poaCrowdsaleMaster must be a valid Ethereum address");
+    require(_registry != address(0), "_registry must be a valid Ethereum address");
 
     // Set addresses in common storage using deterministic storage slots
     setPoaTokenMaster(_poaTokenMaster);
@@ -91,10 +91,10 @@ contract PoaProxy is PoaProxyCommon {
     public
     returns (bool)
   {
-    require(msg.sender == getContractAddress("PoaManager"));
-    require(_newMaster != address(0));
-    require(poaTokenMaster() != _newMaster);
-    require(isContract(_newMaster));
+    require(msg.sender == getContractAddress("PoaManager"), "Only PoaManager is allowed to update the PoaToken contract");
+    require(_newMaster != address(0), "_newMaster must be a valid Ethereum address");
+    require(poaTokenMaster() != _newMaster, "_newMaster must be different than the current poaTokenMaster");
+    require(isContract(_newMaster), "_newMaster must be a smart contract");
     address _oldMaster = poaTokenMaster();
     setPoaTokenMaster(_newMaster);
 
@@ -112,10 +112,10 @@ contract PoaProxy is PoaProxyCommon {
     public
     returns (bool)
   {
-    require(msg.sender == getContractAddress("PoaManager"));
-    require(_newMaster != address(0));
-    require(poaCrowdsaleMaster() != _newMaster);
-    require(isContract(_newMaster));
+    require(msg.sender == getContractAddress("PoaManager"), "Only PoaManager is allowed to update the PoaToken contract");
+    require(_newMaster != address(0), "_newMaster must be a valid Ethereum address");
+    require(poaCrowdsaleMaster() != _newMaster, "_newMaster must be different than the current poaTokenMaster");
+    require(isContract(_newMaster), "_newMaster must be a smart contract");
     address _oldMaster = poaCrowdsaleMaster();
     setPoaCrowdsaleMaster(_newMaster);
 

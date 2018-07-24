@@ -17,7 +17,7 @@ contract FeeManager {
   )
     public
   {
-    require(_registryAddress != address(0));
+    require(_registryAddress != address(0), "_registryAddress must be a valid Ethereum address");
     registry = IRegistry(_registryAddress);
   }
 
@@ -46,7 +46,7 @@ contract FeeManager {
     IAccessToken act = IAccessToken(
       registry.getContractAddress("AccessToken")
     );
-    require(act.distribute(weiToAct(msg.value)));
+    require(act.distribute(weiToAct(msg.value)), "act.distribute() failed");
     return true;
   }
 
@@ -59,7 +59,7 @@ contract FeeManager {
     IAccessToken act = IAccessToken(
       registry.getContractAddress("AccessToken")
     );
-    require(act.burn(msg.sender, _value));
+    require(act.burn(msg.sender, _value), "act.burn() failed");
     msg.sender.transfer(actToWei(_value));
     return true;
   }
@@ -69,7 +69,7 @@ contract FeeManager {
     public
     payable
   {
-    revert();
+    revert("Fallback function was called. Either you didn't call the right function or you're trying to do something shady ¯\_(ツ)_/¯");
   }
 
 }

@@ -55,6 +55,10 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
 
   modifier eitherCustodianOrOwner() {
     owner = getContractAddress("PoaManager");
+    // require(
+    //   msg.sender == custodian() ||
+    //   msg.sender == owner, "Not authorized. Function can only be called by either the custodian or the owner"
+    // );
     require(
       msg.sender == custodian() ||
       msg.sender == owner
@@ -64,6 +68,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
 
   modifier onlyOwner() {
     owner = getContractAddress("PoaManager");
+    // require(msg.sender == owner, "Not authorized. Function can only be called by the PoaManager contract");
     require(msg.sender == owner);
     _;
   }
@@ -73,6 +78,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     address _address
   ) {
     if (whitelistTransfers) {
+      // require(isWhitelisted(_address), "Not authorized. _address is not whitelisted for transfers.");
       require(isWhitelisted(_address));
     }
 
@@ -80,11 +86,13 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
   }
 
   modifier whenNotPaused() {
+    // require(!paused(), "Can't call this function while contract is paused");
     require(!paused());
     _;
   }
 
   modifier whenPaused() {
+    // require(paused(), "Can't call this function while contract is unpaused");
     require(paused());
     _;
   }
@@ -109,14 +117,21 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     returns (bool)
   {
     // ensure initialize has not been called already
+    // require(!tokenInitialized(), "Token is already initialized.");
     require(!tokenInitialized());
 
     // validate initialize parameters
+    // require(_name32 != bytes32(0), "_name32 can't be empty");
     require(_name32 != bytes32(0));
+    // require(_symbol32 != bytes32(0), "_symbol32 can't be empty");
     require(_symbol32 != bytes32(0));
+    // require(_broker != address(0), "_broker must be a valid Ethereum address");
     require(_broker != address(0));
+    // require(_custodian != address(0), "_custodian must be a valid Ethereum address");
     require(_custodian != address(0));
+    // require(_registry != address(0), "_registry must be a valid Ethereum address");
     require(_registry != address(0));
+    // require(_totalSupply >= 1e18, "_totalSupply must be at least 1 token");
     require(_totalSupply >= 1e18);
 
     // initialize sequential storage
@@ -149,7 +164,9 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     onlyCustodian
     returns (bool)
   {
+    // require(_newCustodian != address(0), "_newCustodian must be a valid Ethereum address");
     require(_newCustodian != address(0));
+    // require(_newCustodian != custodian(), "_newCustodian can't be the same as the current custodian");
     require(_newCustodian != custodian());
     address _oldCustodian = custodian();
     setCustodian(_newCustodian);
@@ -326,6 +343,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     // calculate fee based on feeRateInPermille
     uint256 _fee = calculateFee(msg.value);
     // ensure the value is high enough for a fee to be claimed
+    // require(_fee > 0, "_fee must be higher than 0");
     require(_fee > 0);
     // deduct fee from payout
     uint256 _payoutAmount = msg.value.sub(_fee);
@@ -365,6 +383,7 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     */
     uint256 _payoutAmount = currentPayout(msg.sender, true);
     // check that there indeed is a pending payout for sender
+    // require(_payoutAmount > 0, "_payoutAmount must be higher than 0");
     require(_payoutAmount > 0);
     // max out per token payout for sender in order to make payouts effectively
     // 0 for sender
@@ -464,7 +483,9 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     // move perToken payout balance to unclaimedPayoutTotals
     settleUnclaimedPerTokenPayouts(msg.sender, _to);
 
+    // require(_to != address(0), "_to must be a valid Ethereum address");
     require(_to != address(0));
+    // require(_value <= balanceOf(msg.sender), "_value can't be greater than the current token balance of msg.sender");
     require(_value <= balanceOf(msg.sender));
     spentBalances[msg.sender] = spentBalances[msg.sender].add(_value);
     receivedBalances[_to] = receivedBalances[_to].add(_value);
@@ -491,8 +512,11 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
     // move perToken payout balance to unclaimedPayoutTotals
     settleUnclaimedPerTokenPayouts(_from, _to);
 
+    // require(_to != address(0), "_to must be a valid Ethereum address");
     require(_to != address(0));
+    // require(_value <= balanceOf(_from), "_value can't be greater than the current token balance of the _from address");
     require(_value <= balanceOf(_from));
+    // require(_value <= allowed[_from][msg.sender], "_value can't be greater than the current token allowance of msg.sender");
     require(_value <= allowed[_from][msg.sender]);
     spentBalances[_from] = spentBalances[_from].add(_value);
     receivedBalances[_to] = receivedBalances[_to].add(_value);

@@ -32,7 +32,7 @@ contract BrickblockToken is PausableToken {
   modifier supplyAvailable(uint256 _value) {
     uint256 _distributedTokens = initialSupply.sub(balances[this].add(bonusTokens));
     uint256 _maxDistributedAmount = initialSupply.mul(contributorsShare).div(100);
-    require(_distributedTokens.add(_value) <= _maxDistributedAmount);
+    require(_distributedTokens.add(_value) <= _maxDistributedAmount, "Distribution amount is bigger than the available token balance");
     _;
   }
 
@@ -41,7 +41,7 @@ contract BrickblockToken is PausableToken {
   )
     public
   {
-    require(_bonusDistributionAddress != address(0));
+    require(_bonusDistributionAddress != address(0), "_bonusDistributionAddress must be a valid Ethereum address");
     bonusTokens = initialSupply.mul(bonusShare).div(100);
     companyTokens = initialSupply.mul(companyShare).div(100);
     bonusDistributionAddress = _bonusDistributionAddress;
@@ -85,9 +85,9 @@ contract BrickblockToken is PausableToken {
     onlyOwner
     returns (bool)
   {
-    require(isContract(_newAddress));
-    require(_newAddress != address(this));
-    require(_newAddress != owner);
+    require(isContract(_newAddress), "_newAddress must be a smart contract");
+    require(_newAddress != address(this), "_newAddress can't be the same as this contract");
+    require(_newAddress != owner, "_newAddress can't be the owners address");
     fountainContractAddress = _newAddress;
     return true;
   }
@@ -99,9 +99,9 @@ contract BrickblockToken is PausableToken {
     supplyAvailable(_value)
     returns (bool)
   {
-    require(tokenSaleActive == true);
-    require(_contributor != address(0));
-    require(_contributor != owner);
+    require(tokenSaleActive == true, "Can't distribute. Token sale is not active.");
+    require(_contributor != address(0), "_contributor must be a valid Ethereum address");
+    require(_contributor != owner, "_contributor can't be the owner");
     balances[this] = balances[this].sub(_value);
     balances[_contributor] = balances[_contributor].add(_value);
     emit Transfer(this, _contributor, _value);
@@ -114,8 +114,8 @@ contract BrickblockToken is PausableToken {
     onlyOwner
     returns (bool)
   {
-    require(_recipient != address(0));
-    require(_recipient != owner);
+    require(_recipient != address(0), "_recipient must be a valid Ethereum address");
+    require(_recipient != owner, "_recipient can't be the owner");
     balances[bonusDistributionAddress] = balances[bonusDistributionAddress].sub(_value);
     balances[_recipient] = balances[_recipient].add(_value);
     emit Transfer(bonusDistributionAddress, _recipient, _value);
@@ -129,9 +129,9 @@ contract BrickblockToken is PausableToken {
     returns (bool)
   {
     // ensure that sale is active. is set to false at the end. can only be performed once.
-    require(tokenSaleActive == true);
+    require(tokenSaleActive == true, "Can't finalize because token sale is inactive");
     // ensure that fountainContractAddress has been set
-    require(fountainContractAddress != address(0));
+    require(fountainContractAddress != address(0), "fountainContractAddress must be a valid Ethereum address");
     // calculate new total supply. need to do this in two steps in order to have accurate totalSupply due to integer division
     uint256 _distributedTokens = initialSupply.sub(balances[this].add(bonusTokens));
     uint256 _newTotalSupply = _distributedTokens.add(bonusTokens.add(companyTokens));
@@ -162,7 +162,7 @@ contract BrickblockToken is PausableToken {
   function()
     external
   {
-    revert();
+    revert("Fallback function was called. Either you didn't call the right function or you're trying to do something shady ¯\_(ツ)_/¯");
   }
 
 }

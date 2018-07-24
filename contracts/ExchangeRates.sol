@@ -55,7 +55,8 @@ contract ExchangeRates is Ownable {
   modifier onlyContract(string _contractName)
   {
     require(
-      msg.sender == registry.getContractAddress(_contractName)
+      msg.sender == registry.getContractAddress(_contractName),
+      "Not authorized. msg.sender is not the given _contractName."
     );
     _;
   }
@@ -67,7 +68,7 @@ contract ExchangeRates is Ownable {
     public
     payable
   {
-    require(_registryAddress != address(0));
+    require(_registryAddress != address(0), "_registryAddress must be a valid Ethereum address.");
     registry = IRegistry(_registryAddress);
     owner = msg.sender;
   }
@@ -151,7 +152,7 @@ contract ExchangeRates is Ownable {
     string memory _queryType = queryTypes[_queryId];
     // check that first byte of _queryType is not 0 (something wrong or empty)
     // if the queryType is 0 then the queryId is incorrect
-    require(bytes(_queryType).length > 0);
+    require(bytes(_queryType).length > 0, "Invalid _queryType");
     // set _queryId to empty (uninitialized, to prevent from being called again)
     delete queryTypes[_queryId];
     // set currency rate depending on _queryType (USD, EUR, etc.)
@@ -369,6 +370,6 @@ contract ExchangeRates is Ownable {
     public
     payable
   {
-    revert();
+    revert("Fallback function was called. Either you didn't call the right function or you're trying to do something shady ¯\_(ツ)_/¯");
   }
 }

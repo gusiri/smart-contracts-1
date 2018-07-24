@@ -2,6 +2,8 @@ pragma solidity 0.4.24;
 
 import "openzeppelin-solidity/contracts/token/ERC20/PausableToken.sol";
 
+/* solium-disable error-reason */
+
 
 contract CustomPOAToken is PausableToken {
   uint8 public constant version = 1;

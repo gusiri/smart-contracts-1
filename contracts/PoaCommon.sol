@@ -136,10 +136,10 @@ contract PoaCommon is PoaProxyCommon {
   */
   modifier validIpfsHash(bytes32[2] _ipfsHash) {
     bytes memory _ipfsHashBytes = bytes(to64LengthString(_ipfsHash));
-    require(_ipfsHashBytes.length == 46);
-    require(_ipfsHashBytes[0] == 0x51);
-    require(_ipfsHashBytes[1] == 0x6D);
-    require(keccak256(_ipfsHashBytes) != keccak256(bytes(proofOfCustody())));
+    require(_ipfsHashBytes.length == 46, "_ipfsHash must have 46 bytes");
+    require(_ipfsHashBytes[0] == 0x51, "_ipfsHashBytes[0] must by 0x51");
+    require(_ipfsHashBytes[1] == 0x6D, "_ipfsHashBytes[1] must by 0x6D");
+    require(keccak256(_ipfsHashBytes) != keccak256(bytes(proofOfCustody())), "_ipfsHash can't be the same as the current proofOfCustody()");
     _;
   }
 
@@ -212,7 +212,8 @@ contract PoaCommon is PoaProxyCommon {
       // we're calling so it's safe to ignore this solium warning.
       // solium-disable-next-line security/no-call-value
       getContractAddress("FeeManager")
-        .call.value(_value)(bytes4(keccak256("payFee()")))
+        .call.value(_value)(bytes4(keccak256("payFee()"))),
+      "FeeManager.payFee() failed"
     );
   }
 

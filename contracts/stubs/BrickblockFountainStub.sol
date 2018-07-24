@@ -21,7 +21,7 @@ contract BrickblockFountainStub is Ownable {
   uint256 public constant companyShareReleaseBlock = 1234567;
   address public brickBlockTokenAddress;
 
-  event BBTLocked(address _locker, uint256 _value);
+  event BBKLocked(address _locker, uint256 _value);
   event CompanyTokensReleased(address _owner, uint256 _tokenAmount);
   event Placeholder(address _address, uint256 _value);
 
@@ -30,7 +30,7 @@ contract BrickblockFountainStub is Ownable {
   )
     public
   {
-    require(_brickBlockTokenAddress != address(0));
+    require(_brickBlockTokenAddress != address(0), "_brickBlockTokenAddress is not a valid Ethereum address");
     brickBlockTokenAddress = _brickBlockTokenAddress;
   }
 
@@ -57,27 +57,27 @@ contract BrickblockFountainStub is Ownable {
     onlyOwner
     returns (bool)
   {
-    BrickblockToken _bbt = BrickblockToken(brickBlockTokenAddress);
-    uint256 _value = _bbt.allowance(brickBlockTokenAddress, this);
-    require(_value > 0);
-    _bbt.transferFrom(brickBlockTokenAddress, this, _value);
+    BrickblockToken _bbk = BrickblockToken(brickBlockTokenAddress);
+    uint256 _value = _bbk.allowance(brickBlockTokenAddress, this);
+    require(_value > 0, "BBK allowance must be greater than 0");
+    _bbk.transferFrom(brickBlockTokenAddress, this, _value);
     updateAccount(brickBlockTokenAddress, balances[brickBlockTokenAddress].tokens.add(_value));
-    emit BBTLocked(brickBlockTokenAddress, _value);
+    emit BBKLocked(brickBlockTokenAddress, _value);
     return true;
   }
 
   // this is a basic representation of how locking tokens will look for contributors
-  function lockBBT()
+  function lockBBK()
     public
     returns (uint256 _value)
   {
     address user = msg.sender;
-    BrickblockToken _bbt = BrickblockToken(brickBlockTokenAddress);
-    _value = _bbt.allowance(user, this);
-    require(_value > 0);
-    _bbt.transferFrom(user, this, _value);
+    BrickblockToken _bbk = BrickblockToken(brickBlockTokenAddress);
+    _value = _bbk.allowance(user, this);
+    require(_value > 0, "BBK allowance must be greater than 0");
+    _bbk.transferFrom(user, this, _value);
     updateAccount(user, balances[user].tokens.add(_value));
-    emit BBTLocked(user, _value);
+    emit BBKLocked(user, _value);
   }
 
   // the company will only be able to claim tokens through this function
@@ -86,13 +86,13 @@ contract BrickblockFountainStub is Ownable {
     onlyOwner
     returns (bool)
   {
-    require(block.number > companyShareReleaseBlock);
-    BrickblockToken _bbt = BrickblockToken(brickBlockTokenAddress);
-    uint256 _companyTokens = balanceOf(_bbt);
+    require(block.number > companyShareReleaseBlock, "Company BBK tokens can't be unlocked yet");
+    BrickblockToken _bbk = BrickblockToken(brickBlockTokenAddress);
+    uint256 _companyTokens = balanceOf(_bbk);
     balances[this].tokens = balances[this].tokens.sub(_companyTokens);
     balances[owner].tokens = balances[owner].tokens.add(_companyTokens);
     updateAccount(brickBlockTokenAddress, 0);
-    _bbt.transfer(owner, _companyTokens);
+    _bbk.transfer(owner, _companyTokens);
     emit CompanyTokensReleased(owner, _companyTokens);
   }
 

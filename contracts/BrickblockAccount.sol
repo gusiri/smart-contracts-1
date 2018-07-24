@@ -21,7 +21,7 @@ contract BrickblockAccount is Ownable {
   )
     public
   {
-    require(_releaseTimeOfCompanyBBKs > block.timestamp);
+    require(_releaseTimeOfCompanyBBKs > block.timestamp, "_releaseTimeOfCompanyBBKs can't be in the past");
     releaseTimeOfCompanyBBKs = _releaseTimeOfCompanyBBKs;
     registry = IRegistry(_registryAddress);
   }
@@ -53,7 +53,7 @@ contract BrickblockAccount is Ownable {
       registry.getContractAddress("BrickblockToken")
     );
 
-    require(bbk.approve(address(act), _value));
+    require(bbk.approve(address(act), _value), "bbk.approve(address(act), _value) failed");
 
     return act.lockBBK(_value);
   }
@@ -92,7 +92,7 @@ contract BrickblockAccount is Ownable {
     onlyOwner
     returns (bool)
   {
-    require(address(this).balance > 0);
+    require(address(this).balance > 0, "ETH balance of this contract must be greater than 0 to withdraw funds.");
     _address.transfer(_value);
     return true;
   }
@@ -119,7 +119,7 @@ contract BrickblockAccount is Ownable {
     onlyOwner
     returns (bool)
   {
-    require(block.timestamp >= releaseTimeOfCompanyBBKs);
+    require(block.timestamp >= releaseTimeOfCompanyBBKs, "Can't withdraw company BBKs yet. Only after _releaseTimeOfCompanyBBKs has passed.");
     IBrickblockToken bbk = IBrickblockToken(
       registry.getContractAddress("BrickblockToken")
     );

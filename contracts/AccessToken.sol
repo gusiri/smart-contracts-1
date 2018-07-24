@@ -97,7 +97,8 @@ contract AccessToken is PausableToken {
   modifier onlyContract(string _contractName)
   {
     require(
-      msg.sender == registry.getContractAddress(_contractName)
+      msg.sender == registry.getContractAddress(_contractName),
+      "Not authorized. msg.sender is not the given _contractName"
     );
     _;
   }
@@ -107,7 +108,7 @@ contract AccessToken is PausableToken {
   )
     public
   {
-    require(_registryAddress != address(0));
+    require(_registryAddress != address(0), "_registryAddress must be a valid Ethereum address");
     registry = IRegistry(_registryAddress);
   }
 
@@ -138,10 +139,10 @@ contract AccessToken is PausableToken {
       registry.getContractAddress("BrickblockToken")
     );
 
-    require(settlePerTokenToSecured(msg.sender));
+    require(settlePerTokenToSecured(msg.sender), "settlePerTokenToSecured(msg.sender) failed");
     lockedBBK[msg.sender] = lockedBBK[msg.sender].add(_amount);
     totalLockedBBK = totalLockedBBK.add(_amount);
-    require(_bbk.transferFrom(msg.sender, this, _amount));
+    require(_bbk.transferFrom(msg.sender, this, _amount), "_bbk.transferFrom(msg.sender, this, _amount) failed");
     emit BBKLockedEvent(msg.sender, _amount, totalLockedBBK);
     return true;
   }
@@ -160,11 +161,11 @@ contract AccessToken is PausableToken {
     IBrickblockToken _bbk = IBrickblockToken(
       registry.getContractAddress("BrickblockToken")
     );
-    require(_amount <= lockedBBK[msg.sender]);
-    require(settlePerTokenToSecured(msg.sender));
+    require(_amount <= lockedBBK[msg.sender], "_amount can't be higher than total locked BBK of msg.sender");
+    require(settlePerTokenToSecured(msg.sender), "settlePerTokenToSecured(msg.sender) failed");
     lockedBBK[msg.sender] = lockedBBK[msg.sender].sub(_amount);
     totalLockedBBK = totalLockedBBK.sub(_amount);
-    require(_bbk.transfer(msg.sender, _amount));
+    require(_bbk.transfer(msg.sender, _amount), "_bbk.transfer(msg.sender, _amoun) failed");
     emit BBKUnlockedEvent(msg.sender, _amount, totalLockedBBK);
     return true;
   }
@@ -260,8 +261,8 @@ contract AccessToken is PausableToken {
     whenNotPaused
     returns (bool)
   {
-    require(_to != address(0));
-    require(_value <= balanceOf(msg.sender));
+    require(_to != address(0), "_to must be a valid Ethereum address");
+    require(_value <= balanceOf(msg.sender), "_value can't be higher than the current token balance of msg.sender");
     spentBalances[msg.sender] = spentBalances[msg.sender].add(_value);
     receivedBalances[_to] = receivedBalances[_to].add(_value);
     emit Transfer(msg.sender, _to, _value);
@@ -286,9 +287,9 @@ contract AccessToken is PausableToken {
     whenNotPaused
     returns (bool)
   {
-    require(_to != address(0));
-    require(_value <= balanceOf(_from));
-    require(_value <= allowed[_from][msg.sender]);
+    require(_to != address(0), "_to must be a valid Ethereum address");
+    require(_value <= balanceOf(_from), "_value can't be higher than the current token balance of the _from address");
+    require(_value <= allowed[_from][msg.sender], "_value can't be higher than the current allowance of msg.sender");
     spentBalances[_from] = spentBalances[_from].add(_value);
     receivedBalances[_to] = receivedBalances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
@@ -316,7 +317,7 @@ contract AccessToken is PausableToken {
     onlyContract("FeeManager")
     returns (bool)
   {
-    require(_value <= balanceOf(_address));
+    require(_value <= balanceOf(_address), "_value can't by higher than the current token balance of _address");
     spentBalances[_address] = spentBalances[_address].add(_value);
     totalSupply_ = totalSupply_.sub(_value);
     emit BurnEvent(_address, _value);
@@ -328,6 +329,6 @@ contract AccessToken is PausableToken {
     public
     payable
   {
-    revert();
+    revert("Fallback function was called. Either you didn't call the right function or you're trying to do something shady ¯\_(ツ)_/¯");
   }
 }

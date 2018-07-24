@@ -37,20 +37,20 @@ contract PoaManager is Ownable {
   event TokenStatusChangedEvent(address indexed token, bool active);
 
   modifier doesEntityExist(address _entityAddress, EntityState entity) {
-    require(_entityAddress != address(0));
-    require(entity.index != 0);
+    require(_entityAddress != address(0), "_entityAddress must be a valid Ethereum address");
+    require(entity.index != 0, "Entity doesn't exist");
     _;
   }
 
   modifier isNewBroker(address _brokerAddress) {
-    require(_brokerAddress != address(0));
-    require(brokerMap[_brokerAddress].index == 0);
+    require(_brokerAddress != address(0), "_brokerAddress must be a valid Ethereum address");
+    require(brokerMap[_brokerAddress].index == 0, "Broker already exists");
     _;
   }
 
   modifier onlyActiveBroker() {
     EntityState memory entity = brokerMap[msg.sender];
-    require(entity.active);
+    require(entity.active, "msg.sender is not an active broker");
     _;
   }
 
@@ -59,7 +59,7 @@ contract PoaManager is Ownable {
   )
     public
   {
-    require(_registryAddress != address(0));
+    require(_registryAddress != address(0), "_registryAddress must be a valid Ethereum address");
     registry = IRegistry(_registryAddress);
   }
 
@@ -113,7 +113,7 @@ contract PoaManager is Ownable {
   )
     private
   {
-    require(entity.active != _active);
+    require(entity.active != _active, "entity is already active");
     entity.active = _active;
   }
 
@@ -381,6 +381,6 @@ contract PoaManager is Ownable {
     public
     payable
   {
-    revert();
+    revert("Fallback function was called. Either you didn't call the right function or you're trying to do something shady ¯\_(ツ)_/¯");
   }
 }

@@ -15,14 +15,15 @@ contract ExchangeRateProvider is usingOraclize {
   {
     require(
       msg.sender == registry.getContractAddress("ExchangeRates") ||
-      msg.sender == oraclize_cbAddress()
+      msg.sender == oraclize_cbAddress(),
+      "This function can only be called by the ExchangeRates contract or by the oracle itself"
     );
     _;
   }
 
   modifier onlyExchangeRates()
   {
-    require(msg.sender == registry.getContractAddress("ExchangeRates"));
+    require(msg.sender == registry.getContractAddress("ExchangeRates"), "This function can only be called by the ExchangeRates contract");
     _;
   }
 
@@ -31,7 +32,7 @@ contract ExchangeRateProvider is usingOraclize {
   )
     public
   {
-    require(_registryAddress != address(0));
+    require(_registryAddress != address(0), "_registryAddress must be a valid Ethereum address");
     registry = IRegistry(_registryAddress);
   }
 
@@ -97,7 +98,7 @@ contract ExchangeRateProvider is usingOraclize {
     public
   {
     // make sure that the caller is oraclize
-    require(msg.sender == oraclize_cbAddress());
+    require(msg.sender == oraclize_cbAddress(), "This function can only be called by the oracle");
     // get currency address of ContractRegistry
     IExchangeRates _exchangeRates = IExchangeRates(
       registry.getContractAddress("ExchangeRates")
@@ -116,7 +117,7 @@ contract ExchangeRateProvider is usingOraclize {
 
     // set rate on ExchangeRates contract giving queryId for validation
     // rate is set in cents api returns float string which is parsed as int
-    require(_exchangeRates.setRate(_queryId, parseInt(_result, 2)));
+    require(_exchangeRates.setRate(_queryId, parseInt(_result, 2)), "Couldn't set exchange rate");
 
     // check if call interval has been set and that _ratesActive is still true
     // if so, call again with the interval

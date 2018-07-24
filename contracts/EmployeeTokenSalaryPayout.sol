@@ -32,7 +32,7 @@ contract EmployeeTokenSalaryPayout is Ownable {
   constructor (IBrickblockToken _bbkToken)
     public
   {
-    require(_bbkToken != address(0));
+    require(_bbkToken != address(0), "_bbkToken must be a valid Ethereum address");
 
     bbkToken = _bbkToken;
   }
@@ -48,9 +48,9 @@ contract EmployeeTokenSalaryPayout is Ownable {
   {
     Employee storage _employee = employees[_beneficiary];
 
-    require(_beneficiary != address(0));
-    require(_quarterlyAmount > 0);
-    require(_employee.quarterlyAmount == 0);
+    require(_beneficiary != address(0), "_beneficiary must be a valid Ethereum address");
+    require(_quarterlyAmount > 0, "_quarterlyAmount must be greater than 0");
+    require(_employee.quarterlyAmount == 0, "Can't addEmployee because _employee already exists.");
 
     employeeAddressList.push(_beneficiary);
     _employee.initialPayoutAmount = _startingBalance;
@@ -70,9 +70,9 @@ contract EmployeeTokenSalaryPayout is Ownable {
   {
     Employee memory _deletedUser = employees[_beneficiary];
 
-    require(_beneficiary != address(0));
-    require(_deletedUser.quarterlyAmount > 0);
-    require(payout(_beneficiary, _endingBalance));
+    require(_beneficiary != address(0), "_beneficiary must be a valid Ethereum address");
+    require(_deletedUser.quarterlyAmount > 0, "Can't removeEmployee because _deletedUser doesn't exist");
+    require(payout(_beneficiary, _endingBalance), "payout() failed");
 
     // if index is not the last entry
     // swap deleted user index with the last one
@@ -94,8 +94,8 @@ contract EmployeeTokenSalaryPayout is Ownable {
     onlyOwner
     returns(bool)
   {
-    require(_beneficiary != address(0));
-    require(newAmount > 0);
+    require(_beneficiary != address(0), "_beneficiary must be a valid Ethereum address");
+    require(newAmount > 0, "_newAmount must be greater than 0");
     employees[_beneficiary].quarterlyAmount = newAmount;
 
     // solium-disable-next-line security/no-block-members

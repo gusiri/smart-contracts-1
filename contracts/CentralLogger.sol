@@ -15,7 +15,7 @@ contract CentralLogger {
   )
     public
   {
-    require(_registryAddress != address(0));
+    require(_registryAddress != address(0), "_registryAddress must be a valid Ethereum address");
     registry = IRegistry(_registryAddress);
   }
 
@@ -24,7 +24,8 @@ contract CentralLogger {
     require(
       IPoaManager(
         registry.getContractAddress("PoaManager")
-      ).getTokenStatus(msg.sender)
+      ).getTokenStatus(msg.sender),
+      "Couldn't determine whether this is an active PoaToken"
     );
     _;
   }
@@ -186,6 +187,6 @@ contract CentralLogger {
     public
     payable
   {
-    revert();
+    revert("Fallback function was called. Either you didn't call the right function or you're trying to do something shady ¯\_(ツ)_/¯");
   }
 }

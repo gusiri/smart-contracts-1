@@ -34,7 +34,7 @@ contract RemoteContractUserStub {
   )
     public
   {
-    require(_registryAddress != address(0));
+    require(_registryAddress != address(0), "_registryAddress is not a valid Ethereum address");
     registry = IRegistry(_registryAddress);
   }
 
@@ -71,7 +71,7 @@ contract RemoteContractUserStub {
     returns (bool)
   {
     RemoteContractStubInterface genericRemoteContract = getRemoteContractStub();
-    require(genericRemoteContract.setTestNumber(_newNumber));
+    require(genericRemoteContract.setTestNumber(_newNumber), "Couldn't set test number");
     return true;
   }
 }

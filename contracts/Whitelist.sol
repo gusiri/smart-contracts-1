@@ -14,7 +14,7 @@ contract Whitelist is Ownable {
     public
     onlyOwner
   {
-    require(whitelisted[_address] != true);
+    require(whitelisted[_address] != true, "_address is whitelisted already");
     whitelisted[_address] = true;
     emit WhitelistedEvent(_address, true);
   }
@@ -23,7 +23,7 @@ contract Whitelist is Ownable {
     public
     onlyOwner
   {
-    require(whitelisted[_address] != false);
+    require(whitelisted[_address] != false, "_address is not whitelisted");
     whitelisted[_address] = false;
     emit WhitelistedEvent(_address, false);
   }
@@ -33,6 +33,6 @@ contract Whitelist is Ownable {
     public
     payable
   {
-    revert();
+    revert("Fallback function was called. Either you didn't call the right function or you're trying to do something shady ¯\_(ツ)_/¯");
   }
 }

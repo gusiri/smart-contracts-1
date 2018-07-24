@@ -22,18 +22,9 @@ contract ExchangeRateProviderStub {
   // used to check simulated gas price setting
   uint256 public callbackGasPrice;
 
-  // ensure that only the oracle or ExchangeRates contract are allowed
-  modifier onlyAllowed()
-  {
-    require(
-      msg.sender == registry.getContractAddress("ExchangeRates")
-    );
-    _;
-  }
-
   modifier onlyExchangeRates()
   {
-    require(msg.sender == registry.getContractAddress("ExchangeRates"));
+    require(msg.sender == registry.getContractAddress("ExchangeRates"), "Only the ExchangeRates contract is allowed to call this function");
     _;
   }
 
@@ -42,7 +33,7 @@ contract ExchangeRateProviderStub {
   )
     public
   {
-    require(_registryAddress != address(0));
+    require(_registryAddress != address(0), "_registryAddress is not a valid Ethereum address");
     registry = IRegistry(_registryAddress);
   }
 
@@ -66,14 +57,14 @@ contract ExchangeRateProviderStub {
     string _queryType
   )
     public
-    onlyAllowed
+    onlyExchangeRates
     payable
     returns (bool)
   {
     // _callInterval and _callbackGasLimit are not used in this stub
     // so we do this dummy check to get rid of compiler warnings
-    require(_callInterval != 0);
-    require(_callbackGasLimit != 0);
+    require(_callInterval != 0, "Dummy check, i can be outcommented at will. just ignore me");
+    require(_callbackGasLimit != 0, "Dummy check, i can be outcommented at will. just ignore me");
     // simulate price of 2 000 000 000
     uint256 _simulatedPrice = 2e9;
     if (_simulatedPrice > address(this).balance) {
