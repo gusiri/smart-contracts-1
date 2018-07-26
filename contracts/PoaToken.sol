@@ -63,10 +63,6 @@ contract PoaToken is StandardToken, Ownable, PoaCommon {
   }
 
   modifier eitherBrokerOrCustodian() {
-    // require(
-    //   msg.sender == broker() ||
-    //   msg.sender == custodian(), "Not authorized. Function can only be called by either the broker or the custodian"
-    // );
     require(
       msg.sender == broker() ||
       msg.sender == custodian()
